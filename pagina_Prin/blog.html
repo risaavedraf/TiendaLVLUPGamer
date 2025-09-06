@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <title>Document</title>
+  </head>
+  <body>
+    <div>
+         <div class="menuContainer"></div>
+    <div class="container my-5">
+      <div
+        class="row p-4 pb-0 pe-lg-0 pt-lg-5 align-items-center rounded-3 border shadow-lg"
+      >
+        <div class="col-lg-6">
+          <h1 class="display-5 fw-bold text-body-emphasis lh-1 mb-3">
+            CASO #1
+          </h1>
+          <p class="lead">
+            Lorem ipsum dolor sit amet consectetur, 
+            adipisicing elit. Eum soluta iusto nemo numquam,
+             hic perspiciatis id esse ipsam facere illum iure, 
+             vero deserunt quidem est. 
+             Et doloremque cupiditate earum molestiae.
+          </p>
+          <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            <button type="button" class="btn btn-primary btn-lg px-4 me-md-2">
+              VER CASO
+            </button>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 text-center">
+          <img
+            src="Img/ESports.jpg"
+            class="img-fluid rounded"
+            alt="ESports"
+            width="700"
+            height="500"
+            loading="lazy"
+          />
+        </div>
+      </div>
+    </div>
+    <div class="container my-5">
+      <div
+        class="row p-4 pb-0 pe-lg-0 pt-lg-5 align-items-center rounded-3 border shadow-lg"
+      >
+        <div class="col-lg-6">
+          <h1 class="display-5 fw-bold text-body-emphasis lh-1 mb-3">
+            CASO #2
+          </h1>
+          <p class="lead">
+            Lorem ipsum dolor sit amet consectetur, 
+            adipisicing elit. Eum soluta iusto nemo numquam,
+             hic perspiciatis id esse ipsam facere illum iure, 
+             vero deserunt quidem est. 
+             Et doloremque cupiditate earum molestiae.
+          </p>
+          <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            <button type="button" class="btn btn-primary btn-lg px-4 me-md-2">
+              VER CASO
+            </button>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 text-center">
+          <img
+            src="Img\The_International_2014.jpg"
+            class="img-fluid rounded"
+            alt="ESports"
+            width="700"
+            height="500"
+            loading="lazy"
+          />
+        </div>
+      </div>
+    </div>
+    </div>
+   
+    <div class="footerContainer"></div>
+    <script>
+      $(document).ready(function () {
+        $(".menuContainer").load("Header.html");
+      });
+      $(document).ready(function () {
+        $(".footerContainer").load("Footer.html");
+      });
+    </script>
+  </body>
+</html>
