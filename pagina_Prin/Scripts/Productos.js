@@ -103,10 +103,10 @@ const productosArray = [
     productosArray.forEach(producto => {
         const productoHTML = `<div class="col-md-3 mb-4">
       <div class="card h-100 shadow-sm">
-        <img src="${producto.img}" class="card-img-top" alt="">
+        <a href="DetalleProducto.html?id=${producto.id}"><img src="${producto.img}" class="card-img-top" alt=""></a>
         <div class="card-body d-flex flex-column">
           <p class="text-center flex-grow-1">
-            <a href="">${producto.nombre}</a>
+            <a href="DetalleProducto.html?id=${producto.id}">${producto.nombre}</a>
           </p>
           <div class="d-flex justify-content-between align-items-center">
             <small>${producto.categoria.nombre}</small>
@@ -120,4 +120,68 @@ const productosArray = [
   })
 }
 
+
     mostrarProductos();
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.pathname.includes("DetalleProducto.html")) {
+    mostrarDetalleProducto();
+  } else {
+    mostrarProductos(); // tu función actual para la lista
+  }
+});
+
+function mostrarDetalleProducto() {
+  // Obtener parámetros de la URL
+  const params = new URLSearchParams(window.location.search);
+  const idProducto = parseInt(params.get("id"));
+
+  // Buscar el producto en el array
+  const producto = productosArray.find(p => p.id === idProducto);
+
+  if (producto) {
+    // Rellenar datos dinámicamente
+    document.querySelector("h1").textContent = producto.nombre;
+    document.querySelector("h2").textContent = `$${producto.precio}`;
+    document.querySelector("#Categoria").textContent = producto.categoria.nombre;
+    document.querySelector("#mainImage").src = producto.img;
+    document.querySelector("#mainImage1").src = producto.img;
+    document.querySelector("#mainImage2").src = producto.img;
+    document.querySelector("#mainImage3").src = producto.img;
+    document.querySelector("p.text-center.text-md-start").textContent = producto.descripcion;
+
+    // Mostrar productos relacionados
+    mostrarRelacionados(producto.categoria.id, producto.id);
+  } else {
+    document.querySelector("h1").textContent = "Producto no encontrado";
+  }
+}
+function mostrarRelacionados(categoriaId, idActual) {
+  const relacionados = productosArray.filter(p => p.categoria.id === categoriaId && p.id !== idActual);
+
+  const contenedor = document.querySelector("#contenedor-productos");
+  contenedor.innerHTML = "";
+
+  relacionados.forEach(producto => {
+    contenedor.innerHTML += `
+      <div class="col-md-3 mb-4">
+        <div class="card h-100 shadow-sm">
+          <a href="DetalleProducto.html?id=${producto.id}">
+            <img src="${producto.img}" class="card-img-top" alt="${producto.nombre}">
+          </a>
+          <div class="card-body d-flex flex-column">
+            <p class="text-center flex-grow-1">
+              <a href="DetalleProducto.html?id=${producto.id}">${producto.nombre}</a>
+            </p>
+            <div class="d-flex justify-content-between align-items-center">
+              <small>${producto.categoria.nombre}</small>
+              <small>$${producto.precio}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+    
