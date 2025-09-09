@@ -100,24 +100,30 @@ const productosArray = [
   const contenedorProductos = document.querySelector("#contenedor-productos");
 
   function mostrarProductos(){
-    productosArray.forEach(producto => {
-        const productoHTML = `<div class="col-md-3 mb-4">
-      <div class="card h-100 shadow-sm">
-        <a href="DetalleProducto.html?id=${producto.id}"><img src="${producto.img}" class="card-img-top" alt=""></a>
-        <div class="card-body d-flex flex-column">
-          <p class="text-center flex-grow-1">
-            <a href="DetalleProducto.html?id=${producto.id}">${producto.nombre}</a>
-          </p>
-          <div class="d-flex justify-content-between align-items-center">
-            <small>${producto.categoria.nombre}</small>
-            <small>$${producto.precio}</small>
-          </div>
+  contenedorProductos.innerHTML = ""; 
+  productosArray.forEach(producto => {
+      const productoHTML = `<div class="col-md-3 mb-4">
+    <div class="card h-100 shadow-sm">
+      <a href="DetalleProducto.html?id=${producto.id}"><img src="${producto.img}" class="card-img-top" alt="${producto.nombre}"></a>
+      <div class="card-body d-flex flex-column">
+        <p class="text-center flex-grow-1">
+          <a href="DetalleProducto.html?id=${producto.id}">${producto.nombre}</a>
+        </p>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <small>${producto.categoria.nombre}</small>
+          <small>$${producto.precio}</small>
         </div>
+        
+        <div class="d-grid">
+            <button class="btn btn-primary" onclick="agregarAlCarrito(${producto.id})">Añadir al Carrito</button>
+        </div>
+
       </div>
-    </div>`;
-      
-        contenedorProductos.innerHTML += productoHTML;
-  })
+    </div>
+  </div>`;
+    
+      contenedorProductos.innerHTML += productoHTML;
+  });
 }
 
 
@@ -127,20 +133,17 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.location.pathname.includes("DetalleProducto.html")) {
     mostrarDetalleProducto();
   } else {
-    mostrarProductos(); // tu función actual para la lista
+    mostrarProductos(); 
   }
 });
 
 function mostrarDetalleProducto() {
-  // Obtener parámetros de la URL
   const params = new URLSearchParams(window.location.search);
   const idProducto = parseInt(params.get("id"));
 
-  // Buscar el producto en el array
   const producto = productosArray.find(p => p.id === idProducto);
 
   if (producto) {
-    // Rellenar datos dinámicamente
     document.querySelector("h1").textContent = producto.nombre;
     document.querySelector("h2").textContent = `$${producto.precio}`;
     document.querySelector("#Categoria").textContent = producto.categoria.nombre;
@@ -150,7 +153,13 @@ function mostrarDetalleProducto() {
     document.querySelector("#mainImage3").src = producto.img;
     document.querySelector("p.text-center.text-md-start").textContent = producto.descripcion;
 
-    // Mostrar productos relacionados
+    const btnAgregar = document.querySelector("#btn-agregar-carrito");
+    if(btnAgregar) { 
+        btnAgregar.onclick = () => {
+            agregarAlCarrito(producto.id);
+        };
+    }
+    
     mostrarRelacionados(producto.categoria.id, producto.id);
   } else {
     document.querySelector("h1").textContent = "Producto no encontrado";
@@ -173,10 +182,15 @@ function mostrarRelacionados(categoriaId, idActual) {
             <p class="text-center flex-grow-1">
               <a href="DetalleProducto.html?id=${producto.id}">${producto.nombre}</a>
             </p>
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center mb-2">
               <small>${producto.categoria.nombre}</small>
               <small>$${producto.precio}</small>
             </div>
+
+            <div class="d-grid">
+                <button class="btn btn-primary" onclick="agregarAlCarrito(${producto.id})">Añadir al Carrito</button>
+            </div>
+            
           </div>
         </div>
       </div>
@@ -184,4 +198,43 @@ function mostrarRelacionados(categoriaId, idActual) {
   });
 }
 
-    
+function obtenerCarrito() {
+  const carritoJSON = localStorage.getItem('carrito');
+  return carritoJSON ? JSON.parse(carritoJSON) : [];
+}
+
+function guardarCarrito(carrito) {
+  localStorage.setItem('carrito', JSON.stringify(carrito));
+}
+
+
+function agregarAlCarrito(productoId) {
+  const carrito = obtenerCarrito();
+  const producto = productosArray.find(p => p.id === productoId); 
+  
+  if (!producto) return; 
+
+  const itemExistente = carrito.find(item => item.id === productoId);
+
+  if (itemExistente) {
+    itemExistente.cantidad++;
+  } else {
+    carrito.push({ id: productoId, cantidad: 1 });
+  }
+
+  guardarCarrito(carrito);
+
+  const toastElement = document.getElementById('notificacionToast');
+  const toastBody = document.getElementById('toast-body-mensaje');
+  
+  if(toastElement && toastBody) {
+    toastBody.textContent = `¡"${producto.nombre}" se añadió al carrito!`;
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+  }
+}
+
+document.getElementById('btn-home-productos').addEventListener('click', function() {
+    window.location.href = "Productos.html";
+  });
+
