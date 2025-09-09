@@ -14,14 +14,121 @@ let users = [
     rol: "Moderador",
   },
 ];
-let products = [
-  { id: 101, nombre: "Mando PS5", precio: "45.000", stock: 15 },
-  { id: 102, nombre: "Mando XBOX One", precio: "30.000", stock: 30 },
-];
+let productosArray = [
+  {
+    id: 1,
+    nombre: "Teclado Gamer Redragon",
+    descripcion: "Teclado mecánico RGB con retroiluminación personalizable.",
+    categoria: { id: 1, nombre: "Teclados" },
+    stock: 15,
+    precio: 49.99,
+    img: "img/teclado_redragon.png",
+  },
+  {
+    id: 2,
+    nombre: "Mouse Gamer Logitech",
+    descripcion: "Mouse ergonómico con alta precisión y botones programables.",
+    categoria: { id: 2, nombre: "Mouse" },
+    stock: 25,
+    precio: 39.99,
+    img: "img/mouse_logitech.jpg", 
+    },
+    {
+    id: 3,
+    nombre: "Auriculares Gamer HyperX",
+    descripcion: "Auriculares con sonido envolvente y micrófono ajustable.",
+    categoria: { id: 3, nombre: "Auriculares" },
+    stock: 10,
+    precio: 59.99,
+    img: "img/auriculares_hyperx.webp",
+  },
+  { 
+    id: 4,
+    nombre: "Monitor Gamer ASUS",
+    descripcion: "Monitor 27\" 144Hz con tecnología FreeSync para juegos fluidos.",
+    categoria: { id: 4, nombre: "Monitores" },
+    stock: 20,
+    precio: 299.99,
+    img: "img/monitor_asus.jpg"
+  },
+   {
+    id: 5,
+    nombre: "Teclado Gamer Razer",
+    descripcion: "Teclado mecánico RGB con retroiluminación personalizable.",
+    categoria: { id: 1, nombre: "Teclados" },
+    stock: 5,
+    precio: 49.99,
+    img: "img/teclado_razer.jpg",
+  },
+  {
+    id: 6,
+    nombre: "Mouse Gamer Razer",
+    descripcion: "Mouse ergonómico con alta precisión y botones programables.",
+    categoria: { id: 2, nombre: "Mouse" },
+    stock: 15,
+    precio: 39.99,
+    img: "img/mouse_razer.webp", 
+    },
+    {
+    id: 7,
+    nombre: "Auriculares Gamer Razer",
+    descripcion: "Auriculares con sonido envolvente y micrófono ajustable.",
+    categoria: { id: 3, nombre: "Auriculares" },
+    stock: 14,
+    precio: 59.99,
+    img: "img/auriculares_razer.png",
+  },
+  { 
+    id: 8,
+    nombre: "Monitor Gamer LG",
+    descripcion: "Monitor 27\" 144Hz con tecnología FreeSync para juegos fluidos.",
+    categoria: { id: 4, nombre: "Monitores" },
+    stock: 17,
+    precio: 299.99,
+    img: "img/monitor_lg.jpg"
+  },
+  {
+    id: 9,
+    nombre: "Teclado Gamer Logitech",
+    descripcion: "Teclado mecánico RGB con retroiluminación personalizable.",
+    categoria: { id: 1, nombre: "Teclados" },
+    stock: 25,
+    precio: 49.99,
+    img: "img/teclado_logitech.jpg",
+  },
+  {
+    id: 10,
+    nombre: "Mouse Gamer HyperX",
+    descripcion: "Mouse ergonómico con alta precisión y botones programables.",
+    categoria: { id: 2, nombre: "Mouse" },
+    stock: 35,
+    precio: 39.99,
+    img: "img/mouse_hyperx.webp", 
+    },
+    {
+    id: 11,
+    nombre: "Auriculares Gamer Logitech",
+    descripcion: "Auriculares con sonido envolvente y micrófono ajustable.",
+    categoria: { id: 3, nombre: "Auriculares" },
+    stock: 12,
+    precio: 59.99,
+    img: "img/auriculares_logitech.png",
+  },
+  { 
+    id: 12,
+    nombre: "Monitor Gamer Samsung",
+    descripcion: "Monitor 27\" 180Hz con tecnología FreeSync para juegos fluidos.",
+    categoria: { id: 4, nombre: "Monitores" },
+    stock: 23,
+    precio: 299.99,
+    img: "img/monitor_samsug.jpg"
+  }
+
+  ]
 
 // Contadores de ID (busca el mayor y sigue desde ahí)
 let nextUserId = Math.max(...users.map((u) => u.id)) + 1;
-let nextProductId = Math.max(...products.map((p) => p.id)) + 1;
+let nextProductId = Math.max(...productosArray.map((p) => p.id)) + 1;
 
 let deleteMode = { user: false, product: false };
 let currentModalType = null;
@@ -46,7 +153,7 @@ function renderUsers() {
 function renderProducts() {
   const tbody = document.querySelector("#products-table tbody");
   tbody.innerHTML = "";
-  products.forEach((p) => {
+  productosArray.forEach((p) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${p.id}</td>
@@ -74,7 +181,7 @@ function deleteUser(id) {
   updateDashboard();
 }
 function deleteProduct(id) {
-  products = products.filter((p) => p.id !== id);
+  productosArray = productosArray.filter((p) => p.id !== id);
   renderProducts();
   updateDashboard();
 }
@@ -118,7 +225,7 @@ function saveItem() {
       precio: document.getElementById("field2").value,
       stock: document.getElementById("field3").value,
     };
-    products.push(newProduct);
+    productosArray.push(newProduct);
     renderProducts();
   }
   closeModal();
@@ -145,12 +252,12 @@ function toggleSidebar(forceState) {
 // Dashboard
 function updateDashboard() {
   document.getElementById("total-users").innerText = users.length;
-  document.getElementById("total-products").innerText = products.length;
+  document.getElementById("total-products").innerText = productosArray.length;
 
-  let stockTotal = products.reduce((sum, p) => sum + p.stock, 0);
+  let stockTotal = productosArray.reduce((sum, p) => sum + p.stock, 0);
   document.getElementById("total-stock").innerText = stockTotal;
 
-  let valorInventario = products.reduce(
+  let valorInventario = productosArray.reduce(
     (sum, p) => sum + p.precio * p.stock,
     0
   );
@@ -158,5 +265,10 @@ function updateDashboard() {
     "$" + valorInventario.toLocaleString();
 }
 
+
 // Iniciar en dashboard
 showSection("dashboard");
+
+  
+
+    
