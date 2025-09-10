@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style/style.css" />
+    <link rel="stylesheet"href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"rel="stylesheet"integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"crossorigin="anonymous"/>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <title>Document</title>
+</head>
+<body>
+    <div class="menuContainer"></div>
+
+        <section id="seccion-nosotros">
+            <div class="container my-5">
+                <div class="row p-4 pb-0 pe-lg-0 pt-lg-5 align-items-center rounded-3 border shadow-lg">
+                    <div class="col-12 col-md-6 text-center">
+                        <img src="Img/logo-Photoroom.png" class="img-fluid rounded" alt="Level-Up Gamer" width="200" height="200" loading="lazy">
+                    </div>
+                    <div class="col-lg-6 p-3 p-lg-5 pt-lg-3">
+                        <h2 class="display-5 fw-bold text-body-emphasis lh-1 mb-3">Sobre Nosotros</h2>
+                        <p class="lead">Aquí va la historia de la tienda, la misión, visión y valores clave.
+                            Espacio para conectar con los clientes y explicar el proósito del negocio
+                        </p>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+    <section id="seccion-contacto-directo">
+        <div class="container my-5">
+            <div class="row p-4 pb-0 pe-lg-0 pt-lg-5 align-items-center rounded-3 border shadow-lg">
+                <div class="col-12 text-center p-3 p-lg-5 pt-lg-3">
+                    <h2 class="display-5 fw-bold text-body-emphasis lh-1 mb-3">Contacto Directo</h2>
+                    <p class="lead">
+                        Completa el formulario para enviarnos un mensaje. Te responderemos lo antes posible.
+                    </p>
+                </div>
+                <div class="col-12 p-3 p-lg-5 pt-lg-3">
+                    <form>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Correo Electrónico</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Mensaje</label>
+                            <textarea class="form-control" id="message" rows="5" required></textarea>
+                        </div>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary btn-lg px-4">Enviar Mensaje</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    </div>
+    </div>
+   
+    <div class="footerContainer"></div>
+    <script>
+      $(document).ready(function () {
+        $(".menuContainer").load("Header.html");
+        $(".footerContainer").load("Footer.html");
+      });
+    </script>
+    <script src="Scripts/administrador.js"></script>
+  </body>
+</html>

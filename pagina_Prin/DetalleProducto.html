@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <style>
+      .thumb {
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+      .thumb.active {
+        border-color: blue;
+      }
+    </style>
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="menuContainer"></div>
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+      <div
+        id="notificacionToast"
+        class="toast"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="toast-header">
+          <strong class="me-auto">🛒 Carrito de Compras</strong>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="toast-body" id="toast-body-mensaje">
+          ¡Producto añadido correctamente!
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="INDEX.HTML">Home</a></li>
+            <li class="breadcrumb-item active">
+              <a href="#" id="Categoria">Categoria</a>
+            </li>
+          </ol>
+        </nav>
+      </div>
+
+      <div class="row mb-3">
+        <!-- Columna de imagen y miniaturas -->
+        <div class="col-md-6 text-center">
+          <!-- Imagen principal -->
+          <img
+            id="mainImage"
+            src="Img\auriculares_hyperx.webp"
+            class="img-fluid border mb-3"
+            alt="Imagen principal"
+          />
+          <!-- Miniaturas -->
+          <div class="row g-2 justify-content-center">
+            <div class="col-auto">
+              <img
+                id="mainImage1"
+                src="Img\auriculares_hyperx.webp"
+                class="img-thumbnail thumb active"
+                onclick="changeImage(this)"
+                width="80"
+                height="80"
+              />
+            </div>
+            <div class="col-auto">
+              <img
+                id="mainImage2"
+                src="Img\auriculares_hyperx.webp"
+                class="img-thumbnail thumb"
+                onclick="changeImage(this)"
+                width="80"
+                height="80"
+              />
+            </div>
+            <div class="col-auto">
+              <img
+                id="mainImage3"
+                src="Img\auriculares_hyperx.webp"
+                class="img-thumbnail thumb"
+                onclick="changeImage(this)"
+                width="80"
+                height="80"
+              />
+            </div>
+          </div>
+        </div>
+        <!-- Columna de datos del producto -->
+        <div class="col-md-6 d-flex flex-column justify-content-start">
+          <div class="d-flex justify-content-between align-items-center">
+            <h1 class="fs-2 text-center text-md-start">
+              AURICULARES HYPERX CLOUD II
+            </h1>
+            <h2 class="fs-2 text-center">$1200.00</h2>
+          </div>
+          <div
+            class="d-flex flex-column flex-sm-row justify-content-between py-4 my-4 border-top"
+          ></div>
+          <p class="text-center text-md-start">
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam,
+            quod.
+          </p>
+          <div
+            class="d-flex flex-column flex-sm-row justify-content-between py-4 my-4 border-top"
+          ></div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="fs-5 text-center text-md-start">Cantidad:</h3>
+            <input type="number" class="form-control w-25" value="1" min="1" />
+          </div>
+          <div
+            class="d-grid gap-2 col-8 col-md-6 mx-auto mx-md-0 justify-content-start"
+          >
+            <button
+              id="btn-agregar-carrito"
+              class="btn btn-primary"
+              type="button"
+            >
+              AGREGAR AL CARRITO
+            </button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3 class="fs-4 text-center text-md-start">Descripcion del producto</h3>
+        <p class="text-center text-md-start">
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam,
+          quod. Lorem ipsum dolor sit amet consectetur adipisicing elit.
+          Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing
+          elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur
+          adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet
+          consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit
+          amet consectetur adipisicing elit. Quisquam, quod.
+        </p>
+      </div>
+      <div>
+        <h3 class="fs-4 text-center text-md-start">Especificaciones</h3>
+        <ul class="text-center text-md-start">
+          <li>Lorem ipsum dolor sit amet consectetur adipisicing elit.</li>
+          <li>Lorem ipsum dolor sit amet consectetur adipisicing elit.</li>
+          <li>Lorem ipsum dolor sit amet consectetur adipisicing elit.</li>
+          <li>Lorem ipsum dolor sit amet consectetur adipisicing elit.</li>
+          <li>Lorem ipsum dolor sit amet consectetur adipisicing elit.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Productos relacionados</h3>
+        <div
+          class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3"
+          id="contenedor-productos"
+        ></div>
+      </div>
+    </div>
+    <div class="footerContainer"></div>
+    <script>
+      function changeImage(el) {
+        // cambiar imagen principal
+        document.getElementById("mainImage").src = el.src;
+
+        // resaltar miniatura activa
+        document
+          .querySelectorAll(".thumb")
+          .forEach((img) => img.classList.remove("active"));
+        el.classList.add("active");
+      }
+      
+      $(document).ready(function () {
+        $(".menuContainer").load("Header.html");
+        $(".footerContainer").load("Footer.html");
+      });
+    </script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+
+    <script src="Scripts/Productos.js"></script>
+    <script src="Scripts/administrador.js"></script>
+  </body>
+</html>
