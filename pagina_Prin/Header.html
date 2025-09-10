@@ -26,19 +26,35 @@
             <li><a href="blog.html" class="nav-link px-2 text-white">Blog</a></li>
             <li><a href="Nosotros.html#seccion-contacto-directo" class="nav-link px-2 text-white">Contacto</a></li>
           </ul>
+
           <div class="d-flex align-items-center">
-              <a href="carrito.html" class="btn btn-outline-light me-2">
-                <i class="bi bi-cart4"></i>
-              </a>
-              <a href="LoginUsuario.html" class="btn btn-outline-light me-2">
-                  Login
-              </a>
-              <a href="Registro.html" class="btn btn-warning">
-                  Sign-up
-              </a>
+
+              <div id="vista-invitado">
+                  <a href="carrito.html" class="btn btn-outline-light me-2">
+                    <i class="bi bi-cart4"></i>
+                  </a>
+                  <a href="LoginUsuario.html" class="btn btn-outline-light me-2">
+                      Login
+                  </a>
+                  <a href="Registro.html" class="btn btn-warning">
+                      Sign-up
+                  </a>
+              </div>
+
+              <div id="vista-usuario" style="display: none;">
+                  <span class="text-white me-3" id="mensaje-bienvenida"></span>
+                  <a href="carrito.html" class="btn btn-outline-light me-2">
+                    <i class="bi bi-cart4"></i>
+                  </a>
+                  <button type="button" class="btn btn-warning" onclick="cerrarSesion()">
+                    Cerrar Sesión
+                  </button>
+              </div>
+
           </div>
-        </div>
+          </div>
       </div>
     </header>
+    <script src="Scripts/administrador.js"></script>
   </body>
 </html>

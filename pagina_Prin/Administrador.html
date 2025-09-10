@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel de Administrador</title>
+    <link rel="stylesheet" href="style/administrador.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <button class="close-btn" onclick="toggleSidebar(false)">❌</button>
+      <h2>Admin Panel</h2>
+      <a href="#" onclick="showSection('dashboard')">📊 Dashboard</a>
+      <a href="#" onclick="showSection('users')">👥 Usuarios</a>
+      <a href="#" onclick="showSection('products')">📦 Productos</a>
+      <a href="#" onclick="showSection('settings')">⚙️ Configuración</a>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="header">
+        <span class="menu-btn" onclick="toggleSidebar()">☰</span>
+        <h3>Bienvenido, Admin</h3>
+        <button class="logout">Cerrar sesión</button>
+      </div>
+
+      <div class="content">
+        <!-- Dashboard -->
+        <div id="dashboard" class="section">
+          <h2>📊 Panel de métricas</h2>
+          <div class="cards">
+            <div class="card">
+              <h3>Total Usuarios</h3>
+              <p id="total-users">0</p>
+            </div>
+            <div class="card">
+              <h3>Total Productos</h3>
+              <p id="total-products">0</p>
+            </div>
+            <div class="card">
+              <h3>Stock Total</h3>
+              <p id="total-stock">0</p>
+            </div>
+            <div class="card">
+              <h3>Valor Inventario</h3>
+              <p id="total-value">$0</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Usuarios -->
+        <div id="users" class="section" style="display: none">
+          <h2>👥 Gestión de Usuarios</h2>
+          <div class="table-container">
+            <div class="actions">
+              <button class="add-btn" onclick="openModal('user')">
+                ➕ Añadir Usuario
+              </button>
+              <button class="delete-btn" onclick="toggleDeleteMode('user')">
+                🗑️ Eliminar
+              </button>
+            </div>
+            <table id="users-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Rol</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Productos -->
+        <div id="products" class="section" style="display: none">
+          <h2>📦 Gestión de Productos</h2>
+          <div class="table-container">
+            <div class="actions">
+              <button class="add-btn" onclick="openModal('product')">
+                ➕ Añadir Producto
+              </button>
+              <button class="delete-btn" onclick="toggleDeleteMode('product')">
+                🗑️ Eliminar
+              </button>
+            </div>
+            <table id="products-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Producto</th>
+                  <th>Precio</th>
+                  <th>Stock</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Configuración -->
+        <div id="settings" class="section" style="display: none">
+          <h2>⚙️ Configuración</h2>
+          <p>Aquí podrás cambiar ajustes del sistema.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal genérico -->
+    <div class="modal" id="modal">
+      <div class="modal-content">
+        <h3 id="modal-title"></h3>
+        <input type="text" id="field1" placeholder="" />
+        <input type="text" id="field2" placeholder="" />
+        <input type="text" id="field3" placeholder="" />
+        <button onclick="saveItem()">Guardar</button>
+        <button onclick="closeModal()">Cancelar</button>
+      </div>
+    </div>
+
+    <script src="scripts/administrador.js"></script>
+  </body>
+</html>

@@ -21,8 +21,7 @@ let users = [
     rol: "Moderador",
   },
 ];
-
-let productosArray = [
+let productosArrayAdmin = [
   {
     id: 1,
     nombre: "Teclado Gamer Redragon",
@@ -133,9 +132,37 @@ let productosArray = [
   },
 ];
 
+function actualizarHeader() {
+    const vistaInvitado = document.querySelector("#vista-invitado");
+    const vistaUsuario = document.querySelector("#vista-usuario");
+    const mensajeBienvenida = document.querySelector("#mensaje-bienvenida");
+
+    // Revisa si los elementos del header existen antes de continuar
+    if (!vistaInvitado || !vistaUsuario || !mensajeBienvenida) {
+        return;
+    }
+
+    const usuarioLogueado = JSON.parse(localStorage.getItem('usuarioLogueado'));
+
+    if (usuarioLogueado) {
+        vistaInvitado.style.display = "none";
+        vistaUsuario.style.display = "block";
+        mensajeBienvenida.textContent = `Bienvenido, ${usuarioLogueado.nombre}`;
+    } else {
+        vistaInvitado.style.display = "block";
+        vistaUsuario.style.display = "none";
+    }
+}
+
+function cerrarSesion() {
+    localStorage.removeItem('usuarioLogueado');
+    // Redirige a la página de inicio para refrescar el estado
+    window.location.href = "INDEX.HTML";
+}
+
 // Contadores
 let nextUserId = Math.max(...users.map((u) => u.id)) + 1;
-let nextProductId = Math.max(...productosArray.map((p) => p.id)) + 1;
+let nextProductId = Math.max(...productosArrayAdmin.map((p) => p.id)) + 1;
 
 let deleteMode = { user: false, product: false };
 let currentModalType = null;
@@ -186,7 +213,7 @@ function renderProducts() {
   const tbody = q("#products-table tbody");
   if (!tbody) return;
   tbody.innerHTML = "";
-  productosArray.forEach((p) => {
+  productosArrayAdmin.forEach((p) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${p.id}</td><td>${p.nombre}</td><td>$${Number(
       p.precio
@@ -216,7 +243,7 @@ function deleteUser(id) {
   updateDashboard();
 }
 function deleteProduct(id) {
-  productosArray = productosArray.filter((p) => p.id !== id);
+  productosArrayAdmin = productosArrayAdmin.filter((p) => p.id !== id);
   renderProducts();
   updateDashboard();
 }
@@ -265,7 +292,7 @@ function saveItem() {
       precio: Number(document.getElementById("field2").value) || 0,
       stock: Number(document.getElementById("field3").value) || 0,
     };
-    productosArray.push(newProduct);
+    productosArrayAdmin.push(newProduct);
     renderProducts();
   }
   closeModal();
@@ -296,10 +323,10 @@ function updateDashboard() {
   if (exists("total-users"))
     document.getElementById("total-users").innerText = users.length;
   if (exists("total-products"))
-    document.getElementById("total-products").innerText = productosArray.length;
+    document.getElementById("total-products").innerText = productosArrayAdmin.length;
 
   if (exists("total-stock")) {
-    let stockTotal = productosArray.reduce(
+    let stockTotal = productosArrayAdmin.reduce(
       (sum, p) => sum + Number(p.stock),
       0
     );
@@ -307,7 +334,7 @@ function updateDashboard() {
   }
 
   if (exists("total-value")) {
-    let valorInventario = productosArray.reduce(
+    let valorInventario = productosArrayAdmin.reduce(
       (sum, p) => sum + Number(p.precio) * Number(p.stock),
       0
     );
@@ -320,10 +347,7 @@ function updateDashboard() {
 function handleLoginClick() {
   const emailEl = document.getElementById("typeEmailX");
   const passEl = document.getElementById("typePasswordX");
-  if (!emailEl || !passEl) {
-    console.warn("Elementos de login no encontrados en esta página.");
-    return;
-  }
+  if (!emailEl || !passEl) return;
 
   const email = emailEl.value.trim();
   const contrasenia = passEl.value.trim();
@@ -331,10 +355,15 @@ function handleLoginClick() {
   const user = users.find(
     (u) => u.email === email && u.contrasenia === contrasenia
   );
+
   if (user) {
-    console.log("Login correcto:", user);
+    // --- LÍNEA CLAVE AÑADIDA ---
+    // Guardamos el usuario encontrado en localStorage para iniciar la sesión
+    localStorage.setItem('usuarioLogueado', JSON.stringify(user));
+
     alert(`Bienvenido ${user.nombre} (${user.rol})`);
-    // redirigir según rol
+    
+    // Redirigir según rol
     if (user.rol.toLowerCase() === "admin") {
       window.location.href = "administrador.html";
     } else {
@@ -347,21 +376,22 @@ function handleLoginClick() {
 
 // ---------- Inicialización: detectar página y enganchar sólo lo necesario ----------
 document.addEventListener("DOMContentLoaded", () => {
-  // Si estamos en la página de login (botón btnLogin existe) -> enganchar login
+  // 1. SIEMPRE intenta actualizar el header en cualquier página
+  // Usamos un pequeño retraso para asegurar que el header cargado con jQuery esté disponible
+  setTimeout(actualizarHeader, 100);
+
+  // 2. Si estamos en la página de login, engancha el evento al botón
   const btnLogin = document.getElementById("btnLogin");
   if (btnLogin) {
-    console.log("Inicializando handlers de login");
     btnLogin.addEventListener("click", handleLoginClick);
+  }
 
-    // opcional: permitir Enter desde inputs
-    ["typeEmailX", "typePasswordX"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") handleLoginClick();
-        });
-      }
-    });
+  // 3. Si estamos en la página de admin, inicializa sus componentes
+  if (document.getElementById("sidebar")) {
+    showSection("dashboard");
+    renderUsers();
+    renderProducts();
+    updateDashboard();
   }
 
   // Si detectamos elementos del admin -> inicializar el dashboard

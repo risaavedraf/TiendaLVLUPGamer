@@ -96,7 +96,7 @@ const productosArray = [
     img: "img/monitor_samsug.jpg"
   }
 
-  ]
+]
   const contenedorProductos = document.querySelector("#contenedor-productos");
 
   function mostrarProductos(){
