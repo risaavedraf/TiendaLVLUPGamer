@@ -129,7 +129,7 @@ const productosArray = [
 
     mostrarProductos();
 
-const productosPorPagina = 6;
+const productosPorPagina = 8;
 let paginaActual = 1;
 
 // NUEVA función para mostrar productos paginados
