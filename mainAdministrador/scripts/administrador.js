@@ -159,6 +159,21 @@ let nextProductId = Math.max(...productosArray.map((p) => p.id)) + 1;
 let deleteMode = { user: false, product: false };
 let currentModalType = null;
 
+// Cargar usuarios registrados desde localStorage y agregarlos al array users
+const usuariosRegistrados = JSON.parse(localStorage.getItem('usuariosRegistrados')) || [];
+usuariosRegistrados.forEach((u, idx) => {
+  // Evitar duplicados por recarga
+  if (!users.some(existing => existing.email === u.correo)) {
+    users.push({
+      id: users.length ? Math.max(...users.map(us => us.id)) + 1 : 1,
+      nombre: `${u.nombre} ${u.apellido}`,
+      email: u.correo,
+      contrasenia: u.contrasena,
+      rol: u.rol || "Usuario"
+    });
+  }
+});
+
 // ---------- UTIL: verificar existencia de elemento antes de usar ----------
 function q(selector) {
   return document.querySelector(selector);
