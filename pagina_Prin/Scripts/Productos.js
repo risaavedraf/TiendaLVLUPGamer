@@ -131,13 +131,18 @@ const productosArray = [
 
 const productosPorPagina = 8;
 let paginaActual = 1;
+let categoriaSeleccionada = 0; // 0 = todas
 
 // NUEVA función para mostrar productos paginados
-function mostrarProductosPaginados(pagina = 1) {
+function mostrarProductosPaginados(pagina = 1, categoriaId = 0) {
   contenedorProductos.innerHTML = "";
+  let productosFiltrados = categoriaId && categoriaId !== 0
+    ? productosArray.filter(p => p.categoria.id === categoriaId)
+    : productosArray;
+
   const inicio = (pagina - 1) * productosPorPagina;
   const fin = inicio + productosPorPagina;
-  const productosPagina = productosArray.slice(inicio, fin);
+  const productosPagina = productosFiltrados.slice(inicio, fin);
 
   productosPagina.forEach(producto => {
     const productoHTML = `<div class="col-md-3 mb-4">
@@ -159,12 +164,12 @@ function mostrarProductosPaginados(pagina = 1) {
     </div>`;
     contenedorProductos.innerHTML += productoHTML;
   });
-  crearPaginacion();
+  crearPaginacion(productosFiltrados.length);
 }
 
-// NUEVA función para crear los botones de paginación
-function crearPaginacion() {
-  const totalPaginas = Math.ceil(productosArray.length / productosPorPagina);
+// Modifica la paginación para aceptar el total filtrado
+function crearPaginacion(totalProductos = productosArray.length) {
+  const totalPaginas = Math.ceil(totalProductos / productosPorPagina);
   const paginacion = document.getElementById('paginacion-productos');
   paginacion.innerHTML = "";
 
@@ -175,22 +180,29 @@ function crearPaginacion() {
       </li>`;
   }
 
-  // Agrega eventos a los botones
   paginacion.querySelectorAll('.page-link').forEach((el, idx) => {
     el.addEventListener('click', function (e) {
       e.preventDefault();
       paginaActual = idx + 1;
-      mostrarProductosPaginados(paginaActual);
+      mostrarProductosPaginados(paginaActual, categoriaSeleccionada);
     });
   });
 }
 
-// Reemplaza la llamada a mostrarProductos() por mostrarProductosPaginados()
+// Evento para el selector de categoría
 document.addEventListener("DOMContentLoaded", () => {
+  const filtro = document.getElementById('filtro-categoria');
+  if (filtro) {
+    filtro.addEventListener('change', function() {
+      categoriaSeleccionada = parseInt(this.value);
+      paginaActual = 1;
+      mostrarProductosPaginados(paginaActual, categoriaSeleccionada);
+    });
+  }
   if (window.location.pathname.includes("DetalleProducto.html")) {
     mostrarDetalleProducto();
   } else {
-    mostrarProductosPaginados(paginaActual);
+    mostrarProductosPaginados(paginaActual, categoriaSeleccionada);
   }
 });
 

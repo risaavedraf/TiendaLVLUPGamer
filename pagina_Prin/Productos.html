@@ -46,6 +46,16 @@
     <div class="album py-5 bg-body-tertiary">
       <div class=""><h1 class="text-center">PRODUCTOS</h1></div>
       <div class="container">
+        <!-- Agrega esto antes del contenedor de productos -->
+        <div class="mb-3 text-center">
+          <select id="filtro-categoria" class="form-select w-auto d-inline-block">
+            <option value="0">Todas las categorías</option>
+            <option value="1">Teclados</option>
+            <option value="2">Mouse</option>
+            <option value="3">Auriculares</option>
+            <option value="4">Monitores</option>
+          </select>
+        </div>
         <div
           class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3"
           id="contenedor-productos"
