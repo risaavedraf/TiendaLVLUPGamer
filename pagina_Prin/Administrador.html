@@ -14,6 +14,7 @@
       <a href="#" onclick="showSection('dashboard')">📊 Dashboard</a>
       <a href="#" onclick="showSection('users')">👥 Usuarios</a>
       <a href="#" onclick="showSection('products')">📦 Productos</a>
+      <a href="#" onclick="showSection('orders')">📦 Órdenes</a>
       <a href="#" onclick="showSection('settings')">⚙️ Configuración</a>
     </div>
 
@@ -46,6 +47,10 @@
               <h3>Valor Inventario</h3>
               <p id="total-value">$0</p>
             </div>
+            <div class="card">
+              <h3>Cantidad de Pedidos</h3>
+              <p id="total-orders">0</p>
+            </div>
           </div>
         </div>
 
@@ -65,8 +70,11 @@
               <thead>
                 <tr>
                   <th>ID</th>
+                  <th>Run</th>
                   <th>Nombre</th>
+                  <th>Apellidos</th>
                   <th>Email</th>
+                  <th>Direccion</th>
                   <th>Rol</th>
                 </tr>
               </thead>
@@ -92,8 +100,36 @@
                 <tr>
                   <th>ID</th>
                   <th>Producto</th>
+                  <th>Descripcion</th>
                   <th>Precio</th>
                   <th>Stock</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="orders" class="section" style="display: none">
+          <h2>📦 Gestión de Ordenes</h2>
+          <div class="table-container">
+            <div class="actions">
+              <button class="add-btn" onclick="openModal('order')">
+                ➕ Añadir Orden
+              </button>
+              <button class="delete-btn" onclick="toggleDeleteMode('order')">
+                🗑️ Eliminar
+              </button>
+            </div>
+            <table id="orders-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Usuario</th>
+                  <th>Fecha</th>
+                  <th>Total</th>
+                  <th>Envío</th>
+                  <th>Detalles</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -113,14 +149,29 @@
     <div class="modal" id="modal">
       <div class="modal-content">
         <h3 id="modal-title"></h3>
+        <div id="orderDetailsContainer" style="display: none">
+          <select id="orderProductSelect"></select>
+          <input type="number" id="orderProductQty" min="1" value="1" />
+          <button type="button" onclick="addProductToOrder()">
+            Agregar producto
+          </button>
+          <ul id="orderDetailsList"></ul>
+          <div>Total: $<span id="orderTotal">0</span></div>
+        </div>
         <input type="text" id="field1" placeholder="" />
         <input type="text" id="field2" placeholder="" />
         <input type="text" id="field3" placeholder="" />
+        <input type="text" id="field4" placeholder="" />
+        <input type="text" id="field5" placeholder="" style="display: none" />
+        <input type="text" id="field6" placeholder="" style="display: none" />
+        <select id="regionSelect" style="display: none"></select>
+        <select id="comunaSelect" style="display: none"></select>
         <button onclick="saveItem()">Guardar</button>
         <button onclick="closeModal()">Cancelar</button>
       </div>
     </div>
 
-    <script src="scripts/administrador.js"></script>
+    <script src="Scripts/registro.js"></script>
+    <script src="Scripts/administrador.js"></script>
   </body>
 </html>
