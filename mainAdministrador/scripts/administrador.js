@@ -1,24 +1,32 @@
-
 let users = [
   {
     id: 1,
-    nombre: "Ricardo Saavedra",
+    run: "21123123K",
+    nombre: "Ricardo",
+    apellido: "Saavedra",
     email: "ri.saavedra@duocuc.cl",
     contrasenia: "admin123",
+    direccion: "El tabo",
     rol: "Admin",
   },
   {
     id: 2,
+    run: "19437243K",
     nombre: "Roberto",
+    apellido: "Apellido",
     email: "robe@duocuc.cl",
     contrasenia: "admin123",
+    direccion: "Su casa",
     rol: "Usuario",
   },
   {
     id: 3,
-    nombre: "Ignacio Pérez",
+    run: "215091503",
+    nombre: "Ignacio",
+    apellido: "Pérez",
     email: "ign.perezs@duocuc.cl",
     contrasenia: "admin123",
+    direccion: "Vergel 2015",
     rol: "Moderador",
   },
 ];
@@ -134,6 +142,16 @@ let productosArray = [
   },
 ];
 
+//Se crean los limites de texto
+const limits = {
+  user: { run: 9, nombre: 50, apellido: 100, email: 100, direccion: 300 },
+  product: { nombre: 100, descripcion: 500 },
+};
+
+function limitText(value, max) {
+  return value.length > max ? value.slice(0, max) : value;
+}
+
 // Contadores
 let nextUserId = Math.max(...users.map((u) => u.id)) + 1;
 let nextProductId = Math.max(...productosArray.map((p) => p.id)) + 1;
@@ -156,7 +174,13 @@ function renderUsers() {
   tbody.innerHTML = "";
   users.forEach((u) => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${u.id}</td><td>${u.nombre}</td><td>${u.email}</td><td>${u.rol} <span class="delete-x" onclick="deleteUser(${u.id})">❌</span></td>`;
+    tr.innerHTML = `<td>${u.id}</td>
+    <td>${u.run}</td>
+    <td>${u.nombre}</td>
+    <td>${u.apellido}</td>
+    <td>${u.email}</td>
+    <td>${u.direccion}</td>
+    <td>${u.rol} <span class="delete-x" onclick="deleteUser(${u.id})">❌</span></td>`;
     if (deleteMode.user) {
       const x = tr.querySelector(".delete-x");
       if (x) x.style.display = "inline";
@@ -174,11 +198,13 @@ function renderProducts() {
   tbody.innerHTML = "";
   productosArray.forEach((p) => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${p.id}</td><td>${p.nombre}</td><td>$${Number(
-      p.precio
-    ).toLocaleString()}</td><td>${
-      p.stock
-    } <span class="delete-x" onclick="deleteProduct(${p.id})">❌</span></td>`;
+    tr.innerHTML = `<td>${p.id}</td>
+    <td>${p.nombre}</td>
+    <td>${p.descripcion}</td>
+    <td>$${Number(p.precio).toLocaleString()}</td>
+    <td>${p.stock} <span class="delete-x" onclick="deleteProduct(${
+      p.id
+    })">❌</span></td>`;
     if (deleteMode.product) {
       const x = tr.querySelector(".delete-x");
       if (x) x.style.display = "inline";
@@ -215,18 +241,25 @@ function openModal(type) {
   modal.style.display = "flex";
   if (type === "user") {
     document.getElementById("modal-title").innerText = "Añadir Usuario";
-    document.getElementById("field1").placeholder = "Nombre";
-    document.getElementById("field2").placeholder = "Email";
-    document.getElementById("field3").placeholder = "Rol";
+    document.getElementById("field1").placeholder = "Run";
+    document.getElementById("field2").placeholder = "Nombre";
+    document.getElementById("field3").placeholder = "Apellidos";
+    document.getElementById("field4").placeholder = "Email";
+    document.getElementById("field5").placeholder = "Direccion";
+    document.getElementById("field6").placeholder = "Rol";
   } else {
     document.getElementById("modal-title").innerText = "Añadir Producto";
     document.getElementById("field1").placeholder = "Nombre";
-    document.getElementById("field2").placeholder = "Precio";
-    document.getElementById("field3").placeholder = "Stock";
+    document.getElementById("field2").placeholder = "Descripcion";
+    document.getElementById("field3").placeholder = "Precio";
+    document.getElementById("field4").placeholder = "Stock";
   }
   document.getElementById("field1").value = "";
   document.getElementById("field2").value = "";
   document.getElementById("field3").value = "";
+  document.getElementById("field4").value = "";
+  document.getElementById("field5").value = "";
+  document.getElementById("field6").value = "";
 }
 function closeModal() {
   const modal = document.getElementById("modal");
@@ -237,9 +270,12 @@ function saveItem() {
   if (currentModalType === "user") {
     const newUser = {
       id: nextUserId++,
-      nombre: document.getElementById("field1").value,
-      email: document.getElementById("field2").value,
-      rol: document.getElementById("field3").value,
+      run: limitText(document.getElementById("field1").value),
+      nombre: limitText(document.getElementById("field2").value),
+      apellido: limitText(document.getElementById("field3").value),
+      email: limitText(document.getElementById("field4").value),
+      direccion: limitText(document.getElementById("field5").value),
+      rol: document.getElementById("field6").value,
     };
     users.push(newUser);
     renderUsers();
@@ -247,9 +283,10 @@ function saveItem() {
     const newProduct = {
       id: nextProductId++,
       nombre: document.getElementById("field1").value,
+      descripcion: document.getElementById("field2").value,
       // convertir a número para evitar problemas en sumas
-      precio: Number(document.getElementById("field2").value) || 0,
-      stock: Number(document.getElementById("field3").value) || 0,
+      precio: Number(document.getElementById("field3").value) || 0,
+      stock: Number(document.getElementById("field4").value) || 0,
     };
     productosArray.push(newProduct);
     renderProducts();
