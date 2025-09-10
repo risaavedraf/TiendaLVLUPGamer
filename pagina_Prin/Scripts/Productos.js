@@ -129,11 +129,68 @@ const productosArray = [
 
     mostrarProductos();
 
+const productosPorPagina = 6;
+let paginaActual = 1;
+
+// NUEVA función para mostrar productos paginados
+function mostrarProductosPaginados(pagina = 1) {
+  contenedorProductos.innerHTML = "";
+  const inicio = (pagina - 1) * productosPorPagina;
+  const fin = inicio + productosPorPagina;
+  const productosPagina = productosArray.slice(inicio, fin);
+
+  productosPagina.forEach(producto => {
+    const productoHTML = `<div class="col-md-3 mb-4">
+      <div class="card h-100 shadow-sm">
+        <a href="DetalleProducto.html?id=${producto.id}"><img src="${producto.img}" class="card-img-top" alt="${producto.nombre}"></a>
+        <div class="card-body d-flex flex-column">
+          <p class="text-center flex-grow-1">
+            <a href="DetalleProducto.html?id=${producto.id}">${producto.nombre}</a>
+          </p>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <small>${producto.categoria.nombre}</small>
+            <small>$${producto.precio}</small>
+          </div>
+          <div class="d-grid">
+              <button class="btn btn-primary" onclick="agregarAlCarrito(${producto.id})">Añadir al Carrito</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+    contenedorProductos.innerHTML += productoHTML;
+  });
+  crearPaginacion();
+}
+
+// NUEVA función para crear los botones de paginación
+function crearPaginacion() {
+  const totalPaginas = Math.ceil(productosArray.length / productosPorPagina);
+  const paginacion = document.getElementById('paginacion-productos');
+  paginacion.innerHTML = "";
+
+  for (let i = 1; i <= totalPaginas; i++) {
+    paginacion.innerHTML += `
+      <li class="page-item ${i === paginaActual ? 'active' : ''}">
+        <a class="page-link" href="#">${i}</a>
+      </li>`;
+  }
+
+  // Agrega eventos a los botones
+  paginacion.querySelectorAll('.page-link').forEach((el, idx) => {
+    el.addEventListener('click', function (e) {
+      e.preventDefault();
+      paginaActual = idx + 1;
+      mostrarProductosPaginados(paginaActual);
+    });
+  });
+}
+
+// Reemplaza la llamada a mostrarProductos() por mostrarProductosPaginados()
 document.addEventListener("DOMContentLoaded", () => {
   if (window.location.pathname.includes("DetalleProducto.html")) {
     mostrarDetalleProducto();
   } else {
-    mostrarProductos(); 
+    mostrarProductosPaginados(paginaActual);
   }
 });
 
