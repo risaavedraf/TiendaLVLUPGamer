@@ -19,6 +19,13 @@ const productosArray = [
     id: 3,
     nombre: "Auriculares Gamer HyperX",
     descripcion: "Auriculares con sonido envolvente y micrófono ajustable.",
+    especificaciones: [
+      "Sonido envolvente 7.1",
+      "Micrófono desmontable",
+      "Almohadillas de espuma viscoelástica",
+      "Compatibilidad multiplataforma",
+      "Cable trenzado resistente"
+    ],
     categoria: { id: 3, nombre: "Auriculares" },
     precio: 59.99,
     img: "img/auriculares_hyperx.webp",
@@ -94,6 +101,14 @@ const productosArray = [
     categoria: { id: 4, nombre: "Monitores" },
     precio: 299.99,
     img: "img/monitor_samsug.jpg"
+  },
+  { 
+    id: 13,
+    nombre: "Hollow Knight PS4",
+    descripcion: "Hollow Knight es un juego de acción y aventura en 2D desarrollado por Team Cherry. Explora un vasto mundo subterráneo lleno de criaturas misteriosas y desafíos emocionantes.",
+    categoria: { id: 5, nombre: "Juegos" },
+    precio: 19.99,
+    img: "img/hollow_knight.jpg"
   }
 
 ]
@@ -220,7 +235,20 @@ function mostrarDetalleProducto() {
     document.querySelector("#mainImage1").src = producto.img;
     document.querySelector("#mainImage2").src = producto.img;
     document.querySelector("#mainImage3").src = producto.img;
-    document.querySelector("p.text-center.text-md-start").textContent = producto.descripcion;
+
+    // Descripción
+    document.querySelectorAll("p.text-center.text-md-start")[0].textContent = producto.descripcion;
+    // Descripción del producto (sección inferior)
+    document.querySelectorAll("p.text-center.text-md-start")[1].textContent = producto.descripcion;
+
+    // Especificaciones
+    const ulEspecificaciones = document.querySelector("ul.text-center.text-md-start");
+    if (ulEspecificaciones && producto.especificaciones) {
+      ulEspecificaciones.innerHTML = "";
+      producto.especificaciones.forEach(esp => {
+        ulEspecificaciones.innerHTML += `<li>${esp}</li>`;
+      });
+    }
 
     const btnAgregar = document.querySelector("#btn-agregar-carrito");
     if(btnAgregar) { 
