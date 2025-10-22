@@ -1,7 +1,7 @@
 // Archivo: Project/src/components/Header.tsx
-
-import { useState } from 'react';
-
+import { Link, useNavigate } from 'react-router-dom'; // 2. Importar 'useNavigate'
+import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 // NOTA: Más adelante, reemplazaremos 'useState' por un "Contexto" de autenticación 
 // para que toda la app sepa quién está logueado. Por ahora, esto es para simular la lógica.
 type User = {
@@ -9,14 +9,20 @@ type User = {
 }
 
 function Header() {
-  // Estado temporal para simular un usuario logueado
-  // Cambia esto a null para ver la vista de "invitado"
-  const [usuarioLogueado, setUsuarioLogueado] = useState<User | null>({ nombre: "Ricardo" });
+  
+  const { getItemCount } = useCart();
+  const totalItems = getItemCount();
 
-  const cerrarSesion = () => {
-    // En el futuro, esto limpiará el localStorage y el Contexto
-    setUsuarioLogueado(null);
-    console.log("Sesión cerrada");
+  // 4. Obtener el usuario y la función logout del AuthContext
+  const { currentUser, logout } = useAuth();
+  
+  // 5. Usar 'useNavigate' para redirigir al usuario
+  const navigate = useNavigate();
+
+  // 6. Esta función ahora usa el contexto y redirige
+  const handleCerrarSesion = () => {
+    logout();
+    navigate('/'); // Redirige al Home después de cerrar sesión
   };
 
   return (
@@ -25,18 +31,11 @@ function Header() {
         <div className="d-flex flex-wrap align-items-center  justify-content-center justify-content-lg-start py-2">
           <div>
             <h2 className="me-3">
-              {/* Las imágenes en /public se acceden desde la raíz.
-                La etiqueta <img> debe cerrarse con "/>" 
-              */}
               <img src="/Img/logo-Photoroom.png" alt="logo" className="logo" />
             </h2>
           </div>
           <ul
             className="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
-            {/* Los links HTML <a href="..."> serán reemplazados por 
-              componentes <Link to="..."> de react-router-dom en el siguiente paso.
-              Por ahora, los dejamos como <a> pero apuntando a las rutas raíz.
-            */}
             <li><a href="/" className="nav-link px-2 text-secondary">Home</a></li>
             <li><a href="/productos" className="nav-link px-2 text-white">Productos</a></li>
             <li><a href="/nosotros" className="nav-link px-2 text-white">Nosotros</a></li>
@@ -45,16 +44,18 @@ function Header() {
           </ul>
 
           <div className="d-flex align-items-center">
-
-            {/* Aquí reemplazamos la lógica de mostrar/ocultar de tu JS
-              con una renderización condicional de React.
-            */}
-            {!usuarioLogueado ? (
-              // Vista Invitado
-              <div id="vista-invitado">
-                <a href="/carrito" className="btn btn-outline-light me-2">
-                  <i className="bi bi-cart4"></i>
-                </a>
+            {!currentUser ? (
+            // Vista Invitado
+            <div id="vista-invitado">
+              {/* ... (enlaces de carrito, login, signup) ... */}
+              <Link to="/carrito" className="btn btn-outline-light me-2 position-relative">
+                <i className="bi bi-cart4"></i>
+                {totalItems > 0 && (
+                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {totalItems}
+                  </span>
+                )}
+              </Link>
                 <a href="/login" className="btn btn-outline-light me-2">
                   Login
                 </a>
@@ -66,17 +67,23 @@ function Header() {
               // Vista Usuario
               <div id="vista-usuario">
                 <span className="text-white me-3" id="mensaje-bienvenida">
-                  Bienvenido, {usuarioLogueado.nombre}
+                  Bienvenido, {currentUser.nombre}
                 </span>
-                <a href="/carrito" className="btn btn-outline-light me-2">
-                  <i className="bi bi-cart4"></i>
-                </a>
+                <Link to="/carrito" className="btn btn-outline-light me-2 position-relative">
+                <i className="bi bi-cart4"></i>
+                {totalItems > 0 && (
+                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {totalItems}
+                    <span className="visually-hidden">items in cart</span>
+                  </span>
+                )}
+              </Link>
                 {/* El evento "onclick" de HTML se vuelve "onClick" en React
                   y llama directamente a nuestra función.
                 */}
-                <button type="button" className="btn btn-warning" onClick={cerrarSesion}>
-                  Cerrar Sesión
-                </button>
+                <button type="button" className="btn btn-warning" onClick={handleCerrarSesion}>
+                Cerrar Sesión
+              </button>
               </div>
             )}
             
