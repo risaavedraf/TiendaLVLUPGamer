@@ -1,35 +1,28 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// Archivo: Project/src/App.tsx
+
+import Header from './component/Header'; // 1. Importa el Header
+import './App.css';
+
+// NOTA: Borramos todo el contenido de ejemplo de Vite (useState, logos, etc.)
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      {/* 2. Renderiza el componente Header */}
+      <Header />
+
+      {/* Pronto añadiremos el "Router" aquí para que cargue 
+        la página de Home, Productos, etc., según la URL.
+      */}
+      <div className="container">
+        <h1>Contenido de la Página (Próximamente)</h1>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+
+      {/* Aquí pondremos el componente <Footer /> 
+        cuando lo migremos en el siguiente paso.
+      */}
     </>
-  )
+  );
 }
 
-export default App
+export default App;

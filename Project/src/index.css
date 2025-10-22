@@ -24,10 +24,9 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  min-height: 100vh; 
+  /* Dejamos min-height para que el fondo ocupe toda la pantalla, 
+     pero quitamos el flex que centraba todo. */
 }
 
 h1 {
@@ -66,3 +65,18 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.icon {
+  font-size: 2.5em;
+}
+
+.logo {
+  height: 200px;
+  width: auto;
+}
+.card-img-top {
+  height: 280px;           /* Altura fija para todas las imágenes */
+  object-fit: contain;     /* Ajusta la imagen dentro del espacio sin deformarla */
+  padding: 10px;           /* Un poco de espacio para que no se recorte */
+}
+
