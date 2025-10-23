@@ -1,43 +1,64 @@
 // Archivo: Project/src/components/ProductCard.tsx
 // (Versión final y corregida)
 
+import type { Product } from '../data/products';
 import { Link } from 'react-router-dom';
-import type { Product } from '../data/products';     // Importamos el tipo de Producto
-import { useCart } from '../contexts/CartContext'; // Importamos el hook del carrito
+import { useCart } from '../contexts/CartContext';
 
-// 1. Aquí está la definición del tipo que faltaba
-export type ProductCardProps = {
+interface ProductCardProps {
   producto: Product;
-};
+}
 
-// 2. Usamos el tipo "ProductCardProps" para las props de la función
 function ProductCard({ producto }: ProductCardProps) {
-  
-  // 3. Obtenemos la función addToCart de nuestro contexto
   const { addToCart } = useCart();
 
   return (
     <div className="col">
-      <div className="card h-100 shadow-sm">
-        <Link to={`/productos/${producto.id}`}>
-          <img src={producto.img} className="card-img-top" alt={producto.nombre} />
+      <div className="card h-100 shadow-sm border-0 product-card">
+        <Link to={`/producto/${producto.id}`} className="text-decoration-none">
+          <img 
+            src={producto.img} 
+            className="card-img-top"
+            alt={producto.nombre}
+            loading="lazy"
+            style={{ height: '250px', objectFit: 'contain', padding: '1rem' }}
+          />
         </Link>
         <div className="card-body d-flex flex-column">
-          <p className="text-center flex-grow-1">
-            <Link to={`/productos/${producto.id}`}>{producto.nombre}</Link>
-          </p>
-          <div className="d-flex justify-content-between align-items-center mb-2">
-            <small>{producto.categoria.nombre}</small>
-            <small>${producto.precio}</small>
+          <div className="mb-2">
+            <span className="badge bg-secondary text-white small">
+              {producto.categoria.nombre}
+            </span>
           </div>
-          
-          <div className="d-grid">
-            <button 
-              className="btn btn-primary" 
-              // 4. Llamamos a la función del contexto en el clic
-              onClick={() => addToCart(producto)} 
+          <h5 className="card-title text-truncate" title={producto.nombre}>
+            <Link 
+              to={`/producto/${producto.id}`} 
+              className="text-decoration-none text-dark"
             >
-              Añadir al Carrito
+              {producto.nombre}
+            </Link>
+          </h5>
+          <p className="card-text text-muted small flex-grow-1" 
+             style={{ 
+               overflow: 'hidden',
+               textOverflow: 'ellipsis',
+               display: '-webkit-box',
+               WebkitLineClamp: 2,
+               WebkitBoxOrient: 'vertical'
+             }}>
+            {producto.descripcion}
+          </p>
+          <div className="mt-auto">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <span className="h5 mb-0 fw-bold text-primary">
+                ${producto.precio.toFixed(2)}
+              </span>
+            </div>
+            <button
+              className="btn btn-primary w-100"
+              onClick={() => addToCart(producto)}
+            >
+              🛒 Añadir al Carrito
             </button>
           </div>
         </div>
