@@ -210,10 +210,10 @@ tr:hover {
   .sidebar .close-btn {
     display: block;
   }
-  .main {
+  .main-admin {
     margin-left: 0;
   }
-  .header .menu-btn {
+  .header-admin .menu-btn {
     display: block;
   }
 }

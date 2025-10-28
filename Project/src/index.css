@@ -1,4 +1,3 @@
-
 .icon {
   font-size: 2.5em;
 }
@@ -8,8 +7,23 @@
   width: auto;
 }
 .card-img-top {
-  height: 280px;           /* Altura fija para todas las imágenes */
-  object-fit: contain;     /* Ajusta la imagen dentro del espacio sin deformarla */
-  padding: 10px;           /* Un poco de espacio para que no se recorte */
+  height: 280px; /* Altura fija para todas las imágenes */
+  object-fit: contain; /* Ajusta la imagen dentro del espacio sin deformarla */
+  padding: 10px; /* Un poco de espacio para que no se recorte */
 }
 
+/* Remove number input spin arrows for a cleaner look */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield; /* Firefox */
+}
+
+/* Category carousel tweaks */
+.category-carousel .card {
+  border: 0;
+}

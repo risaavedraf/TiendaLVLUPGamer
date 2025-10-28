@@ -1,8 +1,9 @@
 // Archivo: Project/src/components/ProductList.tsx
 
-import { productosArray } from '../data/products';
-import type { Product } from '../data/products';
-import ProductCard from './ProductCard';
+import { productosArray } from "../data/products";
+import type { Product } from "../data/products";
+import ProductCard from "./ProductCard";
+import { useEffect, useState, useRef } from "react";
 
 // 1. Definimos las props que este componente puede recibir
 type ProductListProps = {
@@ -12,24 +13,63 @@ type ProductListProps = {
 
 // 2. Usamos las props en la definición de la función
 function ProductList({ limit, products }: ProductListProps) {
-  
-  // 3. Lógica para decidir cuántos productos mostrar
-  // Prioridad: si se pasan products, los usa; sino usa productosArray
+  // Prioridad: si se pasan 'products', los usa tal cual (no infinite scroll).
+  // Si no se pasan products ni limit, activamos carga progresiva en el home.
   const productosBase = products || productosArray;
-  
-  const productosMostrados = limit 
-    ? productosBase.slice(0, limit) 
-    : productosBase; // Si no hay límite, usa el array completo
+
+  const enableInfinite = !products && typeof limit === "undefined";
+
+  const initialCount = 12; // cuantos cargar inicialmente en home
+  const step = 6; // cuantos cargar cada vez que el usuario baja
+
+  const [visibleCount, setVisibleCount] = useState(() =>
+    enableInfinite ? initialCount : limit ?? productosBase.length
+  );
+  const loadingRef = useRef(false);
+
+  useEffect(() => {
+    if (!enableInfinite) return;
+
+    function onScroll() {
+      if (loadingRef.current) return;
+      const nearBottom =
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 400;
+      if (nearBottom && visibleCount < productosBase.length) {
+        loadingRef.current = true;
+        // pequeña pausa para evitar muchas llamadas
+        setTimeout(() => {
+          setVisibleCount((v) => Math.min(productosBase.length, v + step));
+          loadingRef.current = false;
+        }, 250);
+      }
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [enableInfinite, visibleCount, productosBase.length]);
+
+  const productosMostrados = productosBase.slice(0, visibleCount);
 
   return (
-    // 4. Cambiamos 'row-cols-md-4' a 'row-cols-md-3' para que coincida con el CSS 
-    //    de tu Productos.html original
-    <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-3 g-3 g-md-4">
-      {/* 5. Mapeamos sobre la lista filtrada */}
-      {productosMostrados.map(producto => (
-        <ProductCard key={producto.id} producto={producto} />
-      ))}
-    </div>
+    <>
+      <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-3 g-3 g-md-4">
+        {productosMostrados.map((producto) => (
+          <ProductCard key={producto.id} producto={producto} />
+        ))}
+      </div>
+      {enableInfinite && visibleCount < productosBase.length && (
+        <div className="text-center mt-4">
+          <button
+            className="btn btn-outline-primary"
+            onClick={() =>
+              setVisibleCount((v) => Math.min(productosBase.length, v + step))
+            }
+          >
+            Cargar más
+          </button>
+        </div>
+      )}
+    </>
   );
 }
 

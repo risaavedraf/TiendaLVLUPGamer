@@ -34,7 +34,7 @@ export const productosArray: Product[] = [
     categoria: { id: 2, nombre: "Mouse" },
     precio: 39.99,
     stock: 3,
-    img: "/Img/mouse_logitech.jpg", 
+    img: "/Img/mouse_logitech.jpg",
   },
   {
     id: 3,
@@ -45,16 +45,17 @@ export const productosArray: Product[] = [
     stock: 0,
     img: "/Img/auriculares_hyperx.webp",
   },
-  { 
+  {
     id: 4,
     nombre: "Monitor Gamer ASUS",
-    descripcion: "Monitor 27\" 144Hz con tecnología FreeSync para juegos fluidos.",
+    descripcion:
+      'Monitor 27" 144Hz con tecnología FreeSync para juegos fluidos.',
     categoria: { id: 4, nombre: "Monitores" },
     precio: 299.99,
     stock: 6,
-    img: "/Img/monitor_asus.jpg"
+    img: "/Img/monitor_asus.jpg",
   },
-   {
+  {
     id: 5,
     nombre: "Teclado Gamer Razer",
     descripcion: "Teclado mecánico RGB con retroiluminación personalizable.",
@@ -70,7 +71,7 @@ export const productosArray: Product[] = [
     categoria: { id: 2, nombre: "Mouse" },
     precio: 39.99,
     stock: 0,
-    img: "/Img/mouse_razer.webp", 
+    img: "/Img/mouse_razer.webp",
   },
   {
     id: 7,
@@ -81,14 +82,15 @@ export const productosArray: Product[] = [
     stock: 8,
     img: "/Img/auriculares_razer.png",
   },
-  { 
+  {
     id: 8,
     nombre: "Monitor Gamer LG",
-    descripcion: "Monitor 27\" 144Hz con tecnología FreeSync para juegos fluidos.",
+    descripcion:
+      'Monitor 27" 144Hz con tecnología FreeSync para juegos fluidos.',
     categoria: { id: 4, nombre: "Monitores" },
     precio: 299.99,
     stock: 5,
-    img: "/Img/monitor_lg.jpg"
+    img: "/Img/monitor_lg.jpg",
   },
   {
     id: 9,
@@ -106,7 +108,7 @@ export const productosArray: Product[] = [
     categoria: { id: 2, nombre: "Mouse" },
     precio: 39.99,
     stock: 12,
-    img: "/Img/mouse_hyperx.webp", 
+    img: "/Img/mouse_hyperx.webp",
   },
   {
     id: 11,
@@ -117,13 +119,32 @@ export const productosArray: Product[] = [
     stock: 4,
     img: "/Img/auriculares_logitech.png",
   },
-  { 
+  {
     id: 12,
     nombre: "Monitor Gamer Samsung",
-    descripcion: "Monitor 27\" 180Hz con tecnología FreeSync para juegos fluidos.",
+    descripcion:
+      'Monitor 27" 180Hz con tecnología FreeSync para juegos fluidos.',
     categoria: { id: 4, nombre: "Monitores" },
     precio: 299.99,
     stock: 0,
-    img: "/Img/monitor_samsug.jpg"
-  }
+    img: "/Img/monitor_samsug.jpg",
+  },
+  {
+    id: 13,
+    nombre: "Hollow Knight PS4",
+    descripcion: "Juego de aventura y acción en 2D para PlayStation 4.",
+    categoria: { id: 5, nombre: "Videojuegos" },
+    precio: 19.99,
+    stock: 5,
+    img: "/Img/PS4-Hollow-Knight-Voidheart-Edition.png",
+  },
+  {
+    id: 14,
+    nombre: "Playstation 5",
+    descripcion: "Consola de videojuegos de última generación.",
+    categoria: { id: 6, nombre: "Consolas" },
+    precio: 499.99,
+    stock: 3,
+    img: "/Img/1182943_picture_1602146793.png",
+  },
 ];
