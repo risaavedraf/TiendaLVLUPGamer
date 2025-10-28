@@ -25,7 +25,7 @@ function App() {
         <Route index element={<HomePage />} />
         
         {/* CAMBIO: producto/:id en lugar de productos/:productId */}
-        <Route path="producto/:id" element={<DetalleProductoPage />}/>
+        <Route path="producto/:productId" element={<DetalleProductoPage />} /> 
         <Route path="productos" element={<ProductosPage />} />
         <Route path="nosotros" element={<NosotrosPage />} />
         <Route path="blog" element={<BlogPage />} />
