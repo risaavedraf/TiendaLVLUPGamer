@@ -1,12 +1,9 @@
 // Archivo: Project/src/components/Header.tsx
-import { Link, useNavigate } from 'react-router-dom'; // 2. Importar 'useNavigate'
+import { Link, NavLink, useNavigate } from 'react-router-dom'; // 2. Importar 'useNavigate' y NavLink
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 // NOTA: Más adelante, reemplazaremos 'useState' por un "Contexto" de autenticación 
 // para que toda la app sepa quién está logueado. Por ahora, esto es para simular la lógica.
-type User = {
-  nombre: string;
-}
 
 function Header() {
   
@@ -36,11 +33,57 @@ function Header() {
           </div>
           <ul
             className="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
-            <li><a href="/" className="nav-link px-2 text-secondary">Home</a></li>
-            <li><a href="/productos" className="nav-link px-2 text-white">Productos</a></li>
-            <li><a href="/nosotros" className="nav-link px-2 text-white">Nosotros</a></li>
-            <li><a href="/blog" className="nav-link px-2 text-white">Blog</a></li>
-            <li><a href="/nosotros#seccion-contacto-directo" className="nav-link px-2 text-white">Contacto</a></li>
+            <li>
+              <NavLink
+                to="/"
+                end
+                className={({ isActive }) =>
+                  'nav-link px-2 ' + (isActive ? 'text-secondary' : 'text-white')
+                }
+              >
+                Home
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/productos"
+                className={({ isActive }) =>
+                  'nav-link px-2 ' + (isActive ? 'text-secondary' : 'text-white')
+                }
+              >
+                Productos
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/nosotros"
+                className={({ isActive }) =>
+                  'nav-link px-2 ' + (isActive ? 'text-secondary' : 'text-white')
+                }
+              >
+                Nosotros
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/blog"
+                className={({ isActive }) =>
+                  'nav-link px-2 ' + (isActive ? 'text-secondary' : 'text-white')
+                }
+              >
+                Blog
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/nosotros#seccion-contacto-directo"
+                className={({ isActive }) =>
+                  'nav-link px-2 ' + (isActive ? 'text-secondary' : 'text-white')
+                }
+              >
+                Contacto
+              </NavLink>
+            </li>
           </ul>
 
           <div className="d-flex align-items-center">

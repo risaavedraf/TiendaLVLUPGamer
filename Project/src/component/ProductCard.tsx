@@ -4,6 +4,7 @@
 import type { Product } from '../data/products';
 import { Link } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
+import { renderStockBadge } from '../utils/stock';
 
 interface ProductCardProps {
   producto: Product;
@@ -54,12 +55,24 @@ function ProductCard({ producto }: ProductCardProps) {
                 ${producto.precio.toFixed(2)}
               </span>
             </div>
-            <button
-              className="btn btn-primary w-100"
-              onClick={() => addToCart(producto)}
-            >
-              🛒 Añadir al Carrito
-            </button>
+              {/* Badge de stock (si corresponde) justo encima del botón */}
+              <div className="mb-2">
+                {renderStockBadge(producto.stock)}
+              </div>
+
+              {/* Botón deshabilitado si está agotado */}
+              {producto.stock === 0 ? (
+                <button className="btn btn-secondary w-100" disabled aria-disabled>
+                  Agotado
+                </button>
+              ) : (
+                <button
+                  className="btn btn-primary w-100"
+                  onClick={() => addToCart(producto)}
+                >
+                  🛒 Añadir al Carrito
+                </button>
+              )}
           </div>
         </div>
       </div>

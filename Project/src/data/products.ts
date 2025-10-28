@@ -13,6 +13,7 @@ export type Product = {
   categoria: ProductCategory;
   precio: number;
   img: string;
+  stock?: number;
 };
 
 // 2. Exportamos tu array de productos
@@ -23,6 +24,7 @@ export const productosArray: Product[] = [
     descripcion: "Teclado mecánico RGB con retroiluminación personalizable.",
     categoria: { id: 1, nombre: "Teclados" },
     precio: 49.99,
+    stock: 10,
     img: "/Img/teclado_redragon.png", // Usamos la ruta desde /public
   },
   {
@@ -31,6 +33,7 @@ export const productosArray: Product[] = [
     descripcion: "Mouse ergonómico con alta precisión y botones programables.",
     categoria: { id: 2, nombre: "Mouse" },
     precio: 39.99,
+    stock: 3,
     img: "/Img/mouse_logitech.jpg", 
   },
   {
@@ -39,6 +42,7 @@ export const productosArray: Product[] = [
     descripcion: "Auriculares con sonido envolvente y micrófono ajustable.",
     categoria: { id: 3, nombre: "Auriculares" },
     precio: 59.99,
+    stock: 0,
     img: "/Img/auriculares_hyperx.webp",
   },
   { 
@@ -47,6 +51,7 @@ export const productosArray: Product[] = [
     descripcion: "Monitor 27\" 144Hz con tecnología FreeSync para juegos fluidos.",
     categoria: { id: 4, nombre: "Monitores" },
     precio: 299.99,
+    stock: 6,
     img: "/Img/monitor_asus.jpg"
   },
    {
@@ -55,6 +60,7 @@ export const productosArray: Product[] = [
     descripcion: "Teclado mecánico RGB con retroiluminación personalizable.",
     categoria: { id: 1, nombre: "Teclados" },
     precio: 49.99,
+    stock: 2,
     img: "/Img/teclado_razer.jpg",
   },
   {
@@ -63,6 +69,7 @@ export const productosArray: Product[] = [
     descripcion: "Mouse ergonómico con alta precisión y botones programables.",
     categoria: { id: 2, nombre: "Mouse" },
     precio: 39.99,
+    stock: 0,
     img: "/Img/mouse_razer.webp", 
   },
   {
@@ -71,6 +78,7 @@ export const productosArray: Product[] = [
     descripcion: "Auriculares con sonido envolvente y micrófono ajustable.",
     categoria: { id: 3, nombre: "Auriculares" },
     precio: 59.99,
+    stock: 8,
     img: "/Img/auriculares_razer.png",
   },
   { 
@@ -79,6 +87,7 @@ export const productosArray: Product[] = [
     descripcion: "Monitor 27\" 144Hz con tecnología FreeSync para juegos fluidos.",
     categoria: { id: 4, nombre: "Monitores" },
     precio: 299.99,
+    stock: 5,
     img: "/Img/monitor_lg.jpg"
   },
   {
@@ -87,6 +96,7 @@ export const productosArray: Product[] = [
     descripcion: "Teclado mecánico RGB con retroiluminación personalizable.",
     categoria: { id: 1, nombre: "Teclados" },
     precio: 49.99,
+    stock: 1,
     img: "/Img/teclado_logitech.jpg",
   },
   {
@@ -95,6 +105,7 @@ export const productosArray: Product[] = [
     descripcion: "Mouse ergonómico con alta precisión y botones programables.",
     categoria: { id: 2, nombre: "Mouse" },
     precio: 39.99,
+    stock: 12,
     img: "/Img/mouse_hyperx.webp", 
   },
   {
@@ -103,6 +114,7 @@ export const productosArray: Product[] = [
     descripcion: "Auriculares con sonido envolvente y micrófono ajustable.",
     categoria: { id: 3, nombre: "Auriculares" },
     precio: 59.99,
+    stock: 4,
     img: "/Img/auriculares_logitech.png",
   },
   { 
@@ -111,6 +123,7 @@ export const productosArray: Product[] = [
     descripcion: "Monitor 27\" 180Hz con tecnología FreeSync para juegos fluidos.",
     categoria: { id: 4, nombre: "Monitores" },
     precio: 299.99,
+    stock: 0,
     img: "/Img/monitor_samsug.jpg"
   }
 ];

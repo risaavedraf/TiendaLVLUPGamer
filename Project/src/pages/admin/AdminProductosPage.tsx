@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { productosArray as initialProducts } from '../../data/products';
 import type { Product } from '../../data/products'; // Datos iniciales y tipo
 import Modal from '../../component/Model'; // Nuestro Modal genérico
+// renderStockBadge se usa en la UI pública; aquí mostramos el número para administración
 
 function AdminProductosPage() {
   // 1. Estado para la lista de productos
@@ -35,18 +36,33 @@ function AdminProductosPage() {
   // 3. Función para guardar un producto desde el Modal
   const handleSaveProduct = (productData: Partial<Product>) => {
     // Lógica simple para añadir
+    // Resolver categoría: si el modal envía 'categoria' lo usamos; si envía 'categoriaId' buscamos el objeto
+    const categoriaResolved = (productData as any).categoria
+      || (typeof (productData as any).categoriaId !== 'undefined'
+        ? (initialProducts.find(p => p.categoria.id === Number((productData as any).categoriaId))?.categoria)
+        : undefined
+      )
+      || { id: 99, nombre: "Sin Categoría" };
+
     const newProduct: Product = {
       // Valores por defecto o asegurados
       id: Math.max(0, ...products.map(p => p.id)) + 1, // Nuevo ID simple
       nombre: productData.nombre || 'Nombre no definido',
       descripcion: productData.descripcion || 'Sin descripción',
       // Asegurarse de que categoría exista o poner una por defecto
-      categoria: productData.categoria || { id: 99, nombre: "Sin Categoría" }, 
+      categoria: categoriaResolved,
       precio: Number(productData.precio) || 0,
       stock: Number(productData.stock) || 0,
       img: productData.img || '/Img/placeholder.png', // Imagen por defecto si no se añade
     };
     setProducts(currentProducts => [...currentProducts, newProduct]);
+    // También añadimos al array compartido para que aparezca en la vista pública
+    try {
+      initialProducts.push(newProduct);
+    } catch (e) {
+      // Si por alguna razón no se puede mutar, ignoramos: la UI admin ya se actualizó
+      console.warn('No se pudo añadir al array global de productos', e);
+    }
     
     // Llamada a API aquí en un caso real
   };
@@ -92,7 +108,12 @@ function AdminProductosPage() {
                 {/* Acortamos descripción para la tabla */}
                 <td>{product.descripcion.substring(0, 50)}{product.descripcion.length > 50 ? '...' : ''}</td>
                 <td>${product.precio.toFixed(2)}</td>
-                <td>{product.stock || 0}</td> 
+                <td>
+                  {product.stock || 0}
+                  {product.stock === 0 && (
+                    <span className="badge bg-danger ms-2">Sold out</span>
+                  )}
+                </td>
                 {deleteMode && (
                   <td>
                     <button 

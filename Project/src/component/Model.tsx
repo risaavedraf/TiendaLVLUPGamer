@@ -5,6 +5,7 @@ import type { User } from '../data/users'; // Importamos tipos necesarios
 import type{ Product } from '../data/products';
 import type { Order } from '../data/orders';
 import { regionesYComunas } from '../data/locations'; // Para el selector de región/comuna
+import { productosArray } from '../data/products';
 
 // Definimos los tipos de datos que el modal puede manejar (por ahora solo User)
 type ModalDataType = User | Partial<Product> | Partial<Order>; // Partial<> para flexibilidad
@@ -73,6 +74,19 @@ function Modal({ isOpen, onClose, onSave, type, initialData = null }: ModalProps
     }
   };
 
+  // Handler para input file (imagen)
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      // Guardamos la imagen como data URL en formData.img
+      setFormData(prev => ({ ...prev, img: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Handler para el guardado
   const handleSave = () => {
     // Aquí podríamos añadir validaciones antes de guardar
@@ -135,9 +149,17 @@ function Modal({ isOpen, onClose, onSave, type, initialData = null }: ModalProps
            <div style={styles.formFields}>
              <input type="text" name="nombre" placeholder="Nombre Producto" value={formData.nombre || ''} onChange={handleChange} required style={styles.input} />
              <input type="text" name="descripcion" placeholder="Descripción" value={formData.descripcion || ''} onChange={handleChange} style={styles.input} />
+             {/* Imagen: subir archivo (se guardará como data URL) */}
+             <input type="file" name="imgFile" accept="image/*" onChange={handleFileChange} style={styles.input} />
              <input type="number" name="precio" placeholder="Precio" value={formData.precio || ''} onChange={handleChange} step="0.01" min="0" required style={styles.input} />
              <input type="number" name="stock" placeholder="Stock" value={formData.stock || ''} onChange={handleChange} step="1" min="0" required style={styles.input} />
-             {/* Podríamos añadir selector de categoría aquí */}
+             {/* Selector de Categoría: extraemos categorías desde productosArray */}
+             <select name="categoriaId" value={(formData as any).categoriaId || ''} onChange={handleChange} required style={styles.input}>
+               <option value="">Seleccione Categoría</option>
+               {Array.from(new Map(productosArray.map(p => [p.categoria.id, p.categoria])).values()).map(cat => (
+                 <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+               ))}
+             </select>
            </div>
         )}
          {type === 'order' && (
