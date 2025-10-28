@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import type { Product } from "../data/products";
 import { getAverageRating } from "../utils/reviews";
+import { useAuth } from "../contexts/AuthContext";
 
 type Props = {
   title: string;
@@ -99,6 +101,14 @@ export default function CategoryCarousel({
         ? `${items.length * itemWidth}px`
         : `${items.length * (100 / visibleCount)}%`,
   };
+  const { currentUser } = useAuth();
+  const discountPercent =
+    currentUser &&
+    currentUser.email &&
+    (currentUser.email.endsWith("@duocuc.cl") ||
+      currentUser.email.endsWith("@profesor.duoc.cl"))
+      ? 0.1
+      : 0;
 
   return (
     <section className="mb-5">
@@ -122,8 +132,15 @@ export default function CategoryCarousel({
         </div>
       </div>
 
-      <div className="category-carousel" style={{ overflow: "hidden" }}>
-        <div ref={trackRef} style={trackStyle}>
+      <div
+        className="category-carousel"
+        ref={containerRef}
+        style={{ overflow: "hidden" }}
+      >
+        <div
+          ref={trackRef}
+          style={{ ...trackStyle, gap: 0, boxSizing: "border-box" }}
+        >
           {items.map((p, i) => (
             <div
               key={`${p.id}-${i}`}
@@ -140,28 +157,54 @@ export default function CategoryCarousel({
                     : `0 0 ${100 / visibleCount}%`,
               }}
             >
-              <img
-                src={p.img}
-                className="card-img-top"
-                alt={p.nombre}
-                style={{ height: 140, objectFit: "contain", padding: "1rem" }}
-              />
-              <div className="card-body p-2">
-                <div className="mb-1 small text-muted">
-                  {p.categoria.nombre}
-                </div>
-                <h6 className="card-title mb-1" style={{ fontSize: "0.95rem" }}>
-                  {p.nombre}
-                </h6>
-                <div className="d-flex justify-content-between align-items-center">
-                  <div className="text-primary fw-bold">
-                    ${p.precio.toFixed(2)}
+              <Link
+                to={`/producto/${p.id}`}
+                className="text-decoration-none text-reset d-block h-100"
+              >
+                <img
+                  src={p.img}
+                  className="card-img-top"
+                  alt={p.nombre}
+                  style={{ height: 140, objectFit: "contain", padding: "1rem" }}
+                />
+                <div className="card-body p-2">
+                  <div className="mb-1 small text-muted">
+                    {p.categoria.nombre}
                   </div>
-                  <div className="small text-muted">
-                    {(getAverageRating(p.id) ?? 0).toFixed(1)} ⭐
+                  <h6
+                    className="card-title mb-1"
+                    style={{ fontSize: "0.95rem" }}
+                  >
+                    {p.nombre}
+                  </h6>
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div className="text-primary fw-bold">
+                      {discountPercent > 0 ? (
+                        <>
+                          <span
+                            style={{
+                              textDecoration: "line-through",
+                              color: "#888",
+                              fontSize: "0.9rem",
+                              marginRight: 6,
+                            }}
+                          >
+                            ${p.precio.toFixed(2)}
+                          </span>
+                          <span>
+                            ${(p.precio * (1 - discountPercent)).toFixed(2)}
+                          </span>
+                        </>
+                      ) : (
+                        <>${p.precio.toFixed(2)}</>
+                      )}
+                    </div>
+                    <div className="small text-muted">
+                      {(getAverageRating(p.id) ?? 0).toFixed(1)} ⭐
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             </div>
           ))}
         </div>

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import ProductList from "../component/ProductList";
 import CategoryCarousel from "../component/CategoryCarousel";
 import { productosArray } from "../data/products";
+import { ordersArray } from "../data/orders";
 import { getAverageRating } from "../utils/reviews";
 // 3. Importar la clase Toast de Bootstrap
 
@@ -55,6 +56,45 @@ function HomePage() {
                 (a, b) =>
                   (getAverageRating(b.id) ?? 0) - (getAverageRating(a.id) ?? 0)
               )}
+            limit={6}
+            visible={3}
+          />
+
+          {/* Carousel: Más vendidos (calculado a partir de ordersArray) */}
+          <CategoryCarousel
+            title="Más vendidos"
+            products={(() => {
+              // contar ventas por nombre de producto (los orders usan nombre)
+              const counts = new Map<string, number>();
+              for (const o of ordersArray) {
+                for (const d of o.detalles) {
+                  counts.set(
+                    d.producto,
+                    (counts.get(d.producto) || 0) + d.cantidad
+                  );
+                }
+              }
+              // map products to their sold count (0 por defecto)
+              return productosArray
+                .slice()
+                .sort(
+                  (a, b) =>
+                    (counts.get(b.nombre) || 0) - (counts.get(a.nombre) || 0)
+                );
+            })()}
+            limit={6}
+            visible={3}
+          />
+
+          {/* Carousel: Últimas unidades (stock >0 y <5) */}
+          <CategoryCarousel
+            title="Últimas unidades"
+            products={productosArray
+              .slice()
+              .filter(
+                (p) => typeof p.stock === "number" && p.stock > 0 && p.stock < 5
+              )
+              .sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0))}
             limit={6}
             visible={3}
           />

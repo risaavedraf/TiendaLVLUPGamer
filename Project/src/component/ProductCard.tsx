@@ -4,6 +4,7 @@
 import type { Product } from "../data/products";
 import { Link } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
+import { useAuth } from "../contexts/AuthContext";
 import { renderStockBadge } from "../utils/stock";
 import { getAverageRating } from "../utils/reviews";
 
@@ -13,7 +14,17 @@ interface ProductCardProps {
 
 function ProductCard({ producto }: ProductCardProps) {
   const { addToCart } = useCart();
+  const { currentUser } = useAuth();
   const avg = getAverageRating(producto.id);
+
+  const discountPercent =
+    currentUser &&
+    currentUser.email &&
+    (currentUser.email.endsWith("@duocuc.cl") ||
+      currentUser.email.endsWith("@profesor.duoc.cl"))
+      ? 0.1
+      : 0;
+  const discountedPrice = producto.precio * (1 - discountPercent);
 
   function Stars({ value }: { value: number }) {
     // Show half stars for fractional averages. Fractions >=0.75 round up,
@@ -81,7 +92,23 @@ function ProductCard({ producto }: ProductCardProps) {
           <div className="mt-auto">
             <div className="d-flex justify-content-between align-items-center mb-2">
               <span className="h5 mb-0 fw-bold text-primary">
-                ${producto.precio.toFixed(2)}
+                {discountPercent > 0 ? (
+                  <>
+                    <span
+                      style={{
+                        textDecoration: "line-through",
+                        color: "#888",
+                        fontSize: "0.9rem",
+                        marginRight: 6,
+                      }}
+                    >
+                      ${producto.precio.toFixed(2)}
+                    </span>
+                    <span>${discountedPrice.toFixed(2)}</span>
+                  </>
+                ) : (
+                  <>${producto.precio.toFixed(2)}</>
+                )}
               </span>
               <div className="text-end small">
                 {avg ? (

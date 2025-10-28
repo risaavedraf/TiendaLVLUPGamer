@@ -26,4 +26,10 @@ input[type="number"] {
 /* Category carousel tweaks */
 .category-carousel .card {
   border: 0;
+  margin: 0; /* ensure cards don't introduce extra spacing */
+  box-sizing: border-box; /* make padding part of width calculations */
+}
+/* make links inside carousel look clickable */
+.category-carousel .card a {
+  cursor: pointer;
 }
