@@ -6,7 +6,7 @@ import { CartProvider } from "./contexts/CartContext"; // 1. Importar
 import { AuthProvider } from "./contexts/AuthContext";
 // Importaciones de Estilos
 import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap-icons/font/bootstrap-icons.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js"; // 2. Importar JS de Bootstrap
 import "./index.css";
 import { seedDemoReviews } from "./utils/reviews";
