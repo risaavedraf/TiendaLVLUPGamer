@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 // 1. Definimos el tipo para el VALOR del objeto de códigos
 type DescuentoInfo = {
@@ -36,6 +37,7 @@ function CarritoPage() {
     useCart();
 
   const cartDetails = getCartDetails();
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const discountPercent =
     currentUser &&
@@ -231,7 +233,11 @@ function CarritoPage() {
                 </div>
 
                 <div className="d-grid gap-2 mt-3">
-                  <button className="btn btn-primary" type="button">
+                  <button
+                    className="btn btn-primary"
+                    type="button"
+                    onClick={() => navigate("/checkout")}
+                  >
                     Proceder al Pago
                   </button>
                   <button

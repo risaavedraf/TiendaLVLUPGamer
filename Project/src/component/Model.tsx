@@ -27,7 +27,10 @@ function Modal({
   initialData = null,
 }: ModalProps) {
   // Estado interno para manejar los datos del formulario
-  const [formData, setFormData] = useState<ModalDataType>({});
+  // Usamos un registro genérico para evitar errores de acceso a propiedades
+  const [formData, setFormData] = useState<Record<string, any>>(
+    initialData ? (initialData as any) : {}
+  );
 
   // Estado para desplegables de usuario
   const [selectedRegion, setSelectedRegion] = useState("");
@@ -116,7 +119,7 @@ function Modal({
   // Handler para el guardado
   const handleSave = () => {
     // Aquí podríamos añadir validaciones antes de guardar
-    onSave(formData);
+    onSave(formData as ModalDataType);
     onClose(); // Cerrar el modal después de guardar
   };
 
@@ -318,11 +321,13 @@ function Modal({
           </div>
         )}
         {type === "order" && (
-          <p>
-            La edición/creación de órdenes se manejaría de forma diferente
-            (probablemente con selección de productos).
-          </p>
-          // Formulario de Orden (más complejo, omitido por ahora)
+          <>
+            <p>
+              La edición/creación de órdenes se manejaría de forma diferente
+              (probablemente con selección de productos).
+            </p>
+            {/* Formulario de Orden (más complejo, omitido por ahora) */}
+          </>
         )}
 
         {/* Botones */}
