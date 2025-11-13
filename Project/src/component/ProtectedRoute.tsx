@@ -18,7 +18,9 @@ function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   }
 
   // 2. ¿El rol del usuario está permitido?
-  if (!allowedRoles.includes(currentUser.rol)) {
+  const hasPermission = currentUser.roles.some(role => allowedRoles.includes(role));
+  
+  if (!hasPermission) {
     // Rol no permitido -> redirige al Home (o a una página de "Acceso Denegado")
     alert("Acceso denegado. No tienes permisos de administrador.");
     return <Navigate to="/" replace />;

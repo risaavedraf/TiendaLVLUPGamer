@@ -2,133 +2,258 @@
 
 import { createContext, useState, useContext, useEffect } from "react";
 import type { ReactNode } from "react";
-import type { Product } from "../data/products";
-import { productosArray } from "../data/products"; // Importamos nuestro tipo de Producto
+import * as cartApi from "../api/cartApi";
+import type { ProductoResponse } from "../api/productApi";
 
-// 1. Definimos cómo se verá un ítem en el carrito
-export type CartItem = {
+// Tipos adaptados para compatibilidad
+export type Product = {
   id: number;
-  cantidad: number;
+  nombre: string;
+  descripcion: string;
+  precio: number;
+  stock: number;
+  img?: string;
+  categoria?: { id: number; nombre: string };
 };
 
-// 2. Definimos qué expondrá nuestro Contexto
+export type CartItem = {
+  id: number; // ID del item en el carrito
+  productId: number; // ID del producto
+  cantidad: number;
+  producto?: Product;
+  precioUnitario?: number;
+  subtotal?: number;
+};
+
 type CartContextType = {
   cartItems: CartItem[];
   addToCart: (product: Product, qty?: number) => void;
   lastAddedItemName: string | null;
   clearLastAddedItem: () => void;
-
-  // 2. NUEVAS FUNCIONES (de Carrito.js)
   modifyQuantity: (productId: number, change: number) => void;
   removeFromCart: (productId: number) => void;
   clearCart: () => void;
-
-  // 3. NUEVA FUNCIÓN (para el header)
   getItemCount: () => number;
-
-  // 4. NUEVA FUNCIÓN (para obtener detalles)
   getCartDetails: () => (Product & CartItem)[];
+  refreshCart: () => Promise<void>;
+  isLoading: boolean;
+  total: number;
 };
 
-// 3. Creamos el Contexto
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// 4. Creamos el "Proveedor" (El componente que tendrá la lógica)
-export function CartProvider({ children }: { children: ReactNode }) {
-  // ---- LÓGICA DE ESTADO ----
+// Helper para convertir ProductoResponse a Product
+const mapProductoToProduct = (producto: ProductoResponse): Product => ({
+  id: producto.id,
+  nombre: producto.nombre,
+  descripcion: producto.descripcion,
+  precio: producto.precio,
+  stock: producto.stock,
+  img: producto.imagenes?.[0]?.url || producto.imagenUrl || "/Img/elementor-placeholder-image.png",
+  categoria: producto.categoria,
+});
 
-  // Estado para el carrito, inicializado desde localStorage
+// Helper para convertir CarritoItemResponse a CartItem
+const mapCarritoItemToCartItem = (item: any): CartItem => {
+  // El backend devuelve un formato simplificado, necesitamos adaptarlo
+  if (item.producto) {
+    // Formato completo (nuevo)
+    return {
+      id: item.id,
+      productId: item.producto.id,
+      cantidad: item.cantidad,
+      producto: mapProductoToProduct(item.producto),
+      precioUnitario: item.precioUnitario,
+      subtotal: item.subtotal,
+    };
+  } else {
+    // Formato simplificado del backend actual
+    return {
+      id: item.productoId,
+      productId: item.productoId,
+      cantidad: item.cantidad,
+      producto: {
+        id: item.productoId,
+        nombre: item.nombreProducto,
+        descripcion: '',
+        precio: item.precioUnitario,
+        stock: 999, // No sabemos el stock real
+        img: item.imagenUrl,
+        categoria: undefined,
+      },
+      precioUnitario: item.precioUnitario,
+      subtotal: item.subtotal,
+    };
+  }
+};
+
+export function CartProvider({ children }: { children: ReactNode }) {
+  // Estado local del carrito (sincronizado con localStorage para offline)
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    const storedCart = localStorage.getItem("carrito"); //
+    const storedCart = localStorage.getItem("carrito");
     return storedCart ? JSON.parse(storedCart) : [];
   });
 
-  // Estado para el Toast
-  const [lastAddedItemName, setLastAddedItemName] = useState<string | null>(
-    null
-  );
+  const [lastAddedItemName, setLastAddedItemName] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [total, setTotal] = useState(0);
 
-  // Efecto para guardar en localStorage CADA VEZ que el carrito cambie
+  // Sincronizar con localStorage
   useEffect(() => {
-    localStorage.setItem("carrito", JSON.stringify(cartItems)); //
+    localStorage.setItem("carrito", JSON.stringify(cartItems));
   }, [cartItems]);
+
+  // Cargar carrito desde la API al montar (si el usuario está logueado)
+  useEffect(() => {
+    const token = localStorage.getItem('jwt_token');
+    if (token) {
+      refreshCart();
+    }
+  }, []);
+
+  // Función para refrescar el carrito desde la API
+  const refreshCart = async () => {
+    try {
+      setIsLoading(true);
+      const carritoResponse = await cartApi.getCarrito();
+      
+      // Mapear items (ahora maneja ambos formatos)
+      const items = carritoResponse.items.map(mapCarritoItemToCartItem);
+      
+      setCartItems(items);
+      setTotal(carritoResponse.total);
+    } catch (error: any) {
+      console.error('Error al cargar carrito:', error);
+      // Si hay error 404 o el carrito no existe, simplemente inicializar vacío
+      if (error.response?.status === 404) {
+        setCartItems([]);
+        setTotal(0);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // ---- FUNCIONES ----
 
   // Lógica de 'agregarAlCarrito'
-  const addToCart = (product: Product, qty: number = 1) => {
-    // Usamos el prevItems para hacer la comprobación y la actualización
-    setCartItems((prevItems) => {
-      const storeProduct = productosArray.find((p) => p.id === product.id);
-      const available: number = storeProduct?.stock ?? product.stock ?? 0;
-      const itemExistente = prevItems.find((item) => item.id === product.id);
-      const existingQty = itemExistente ? itemExistente.cantidad : 0;
-
-      if (existingQty + qty > available) {
-        window.alert(
-          "No hay suficiente stock disponible para agregar esa cantidad."
-        );
-        return prevItems; // Sin cambios
-      }
-
-      if (itemExistente) {
-        return prevItems.map((item) =>
-          item.id === product.id
-            ? { ...item, cantidad: item.cantidad + qty }
-            : item
-        );
+  const addToCart = async (product: Product, qty: number = 1) => {
+    try {
+      setIsLoading(true);
+      
+      // Si el usuario está logueado, usar la API
+      const token = localStorage.getItem('jwt_token');
+      if (token) {
+        const response = await cartApi.addItemCarrito({
+          productoId: product.id,
+          cantidad: qty,
+        });
+        const items = response.items.map(mapCarritoItemToCartItem);
+        setCartItems(items);
+        setTotal(response.total);
       } else {
-        return [...prevItems, { id: product.id, cantidad: qty }];
-      }
-    });
+        // Modo offline: usar lógica local
+        setCartItems((prevItems) => {
+          const itemExistente = prevItems.find((item) => item.producto?.id === product.id);
+          const existingQty = itemExistente ? itemExistente.cantidad : 0;
 
-    // Guardamos el nombre para el Toast (si se añadió realmente). Nota: si la
-    // cantidad excede stock la función anterior retorna prevItems sin cambios;
-    // ignoraremos esa distinción aquí para mantener la implementación simple.
-    setLastAddedItemName(product.nombre);
+          if (existingQty + qty > product.stock) {
+            window.alert("No hay suficiente stock disponible.");
+            return prevItems;
+          }
+
+          if (itemExistente) {
+            return prevItems.map((item) =>
+              item.producto?.id === product.id
+                ? { ...item, cantidad: item.cantidad + qty }
+                : item
+            );
+          } else {
+            return [...prevItems, { id: Date.now(), productId: product.id, cantidad: qty, producto: product }];
+          }
+        });
+      }
+
+      setLastAddedItemName(product.nombre);
+    } catch (error: any) {
+      console.error('Error al agregar al carrito:', error);
+      window.alert(error.response?.data?.mensaje || 'Error al agregar al carrito');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const clearLastAddedItem = () => {
     setLastAddedItemName(null);
   };
 
-  const modifyQuantity = (productId: number, change: number) => {
-    setCartItems((prevItems) => {
-      const itemEnCarrito = prevItems.find((item) => item.id === productId);
-      if (!itemEnCarrito) return prevItems;
+  const modifyQuantity = async (productId: number, change: number) => {
+    try {
+      const token = localStorage.getItem('jwt_token');
+      const item = cartItems.find((i) => i.productId === productId);
+      
+      if (!item) return;
 
-      const newQuantity = itemEnCarrito.cantidad + change;
-
-      // Comprobar stock máximo
-      const storeProduct = productosArray.find((p) => p.id === productId);
-      const available: number = storeProduct?.stock ?? 0;
-      if (newQuantity > available) {
-        window.alert(
-          "No puedes aumentar la cantidad por encima del stock disponible."
-        );
-        return prevItems;
-      }
+      const newQuantity = item.cantidad + change;
 
       if (newQuantity < 1) {
-        // Eliminar si la cantidad es 0 o menos
-        return prevItems.filter((item) => item.id !== productId);
+        await removeFromCart(productId);
+        return;
+      }
+
+      if (token) {
+        const response = await cartApi.updateItemCarrito(item.id, newQuantity);
+        const items = response.items.map(mapCarritoItemToCartItem);
+        setCartItems(items);
+        setTotal(response.total);
       } else {
-        // Actualizar la cantidad
-        return prevItems.map((item) =>
-          item.id === productId ? { ...item, cantidad: newQuantity } : item
+        setCartItems((prevItems) =>
+          prevItems.map((item) =>
+            item.productId === productId ? { ...item, cantidad: newQuantity } : item
+          )
         );
       }
-    });
+    } catch (error: any) {
+      console.error('Error al modificar cantidad:', error);
+      window.alert(error.response?.data?.mensaje || 'Error al modificar cantidad');
+    }
   };
 
-  const removeFromCart = (productId: number) => {
-    setCartItems((prevItems) =>
-      prevItems.filter((item) => item.id !== productId)
-    );
+  const removeFromCart = async (productId: number) => {
+    try {
+      const token = localStorage.getItem('jwt_token');
+      const item = cartItems.find((i) => i.productId === productId);
+      
+      if (!item) return;
+      
+      if (token) {
+        const response = await cartApi.removeItemCarrito(item.id);
+        const items = response.items.map(mapCarritoItemToCartItem);
+        setCartItems(items);
+        setTotal(response.total);
+      } else {
+        setCartItems((prevItems) =>
+          prevItems.filter((item) => item.productId !== productId)
+        );
+      }
+    } catch (error: any) {
+      console.error('Error al eliminar del carrito:', error);
+    }
   };
 
-  const clearCart = () => {
-    setCartItems([]);
+  const clearCart = async () => {
+    try {
+      const token = localStorage.getItem('jwt_token');
+      
+      if (token) {
+        await cartApi.clearCarrito();
+      }
+      
+      setCartItems([]);
+      setTotal(0);
+    } catch (error) {
+      console.error('Error al vaciar carrito:', error);
+    }
   };
 
   const getItemCount = () => {
@@ -137,13 +262,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Función helper para obtener detalles completos del carrito
   const getCartDetails = () => {
-    return cartItems
-      .map((item) => {
-        const product = productosArray.find((p) => p.id === item.id);
-        // Combinamos el producto encontrado con la cantidad del carrito
-        return { ...product!, ...item };
-      })
-      .filter((item) => item.nombre); // Filtramos por si un producto no se encontró
+    return cartItems.map((item) => ({
+      ...item.producto!,
+      ...item,
+    }));
   };
 
   // 6. Actualizar el valor del contexto
@@ -152,13 +274,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     addToCart,
     lastAddedItemName,
     clearLastAddedItem,
-
-    // Exponer las nuevas funciones
     modifyQuantity,
     removeFromCart,
     clearCart,
     getItemCount,
     getCartDetails,
+    refreshCart,
+    isLoading,
+    total,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

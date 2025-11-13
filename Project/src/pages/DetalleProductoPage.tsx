@@ -3,9 +3,19 @@
 import { useParams, useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { productosArray } from "../data/products";
-import type { Product } from "../data/products";
+import * as productApi from "../api/productApi";
+import type { ProductoResponse } from "../api/productApi";
 import { useCart } from "../contexts/CartContext";
+
+// Helper para formatear precios en CLP
+const formatCLP = (precio: number) => {
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(precio);
+};
 //import ProductList from '../components/ProductList'; // Para productos relacionados
 // ProductCard not used in this page
 import ReviewList from "../component/ReviewList";
@@ -60,36 +70,63 @@ class LocalErrorBoundary extends React.Component<
 }
 
 function DetalleProductoPage() {
+  // IMPORTANTE: Todos los hooks deben estar ANTES de cualquier return condicional
   // 1. Obtener el parámetro ':productId' de la URL
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { currentUser } = useAuth(); // Mover aquí desde abajo
   const [cantidad, setCantidad] = useState(1);
 
   // 2. Estado para guardar el producto encontrado
-  const [producto, setProducto] = useState<Product | null>(null);
+  const [producto, setProducto] = useState<ProductoResponse | null>(null);
+  const [productosRelacionados, setProductosRelacionados] = useState<ProductoResponse[]>([]);
   // Estado para la imagen principal seleccionada (para la galería)
   const [mainImageSrc, setMainImageSrc] = useState<string>("");
   // Estado para controlar el editor de reseñas y forzar recarga de la lista
   const [openReviewEditor, setOpenReviewEditor] = useState(false);
   const [reviewRefresh, setReviewRefresh] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   // 3. Efecto para buscar el producto cuando el productId cambie
   useEffect(() => {
-    const id = parseInt(productId || "0", 10); // Convertir a número
-    const foundProduct = productosArray.find((p) => p.id === id);
-    if (foundProduct) {
-      setProducto(foundProduct);
-      setMainImageSrc(foundProduct.img); // Imagen inicial
-      // Inicializar cantidad según stock: si no hay stock -> 0, si hay -> 1
-      setCantidad(foundProduct.stock && foundProduct.stock > 0 ? 1 : 0);
-    } else {
-      setProducto(null); // Producto no encontrado
-      setMainImageSrc("");
-    }
-  }, [productId]); // Se ejecuta cada vez que el 'productId' de la URL cambia
+    const loadProducto = async () => {
+      try {
+        setIsLoading(true);
+        const id = parseInt(productId || "0", 10);
+        const foundProduct = await productApi.getProductoById(id);
+        setProducto(foundProduct);
+        setMainImageSrc(foundProduct.imagenes && foundProduct.imagenes.length > 0 ? foundProduct.imagenes[0].url : "/Img/elementor-placeholder-image.png");
+        setCantidad(foundProduct.stock && foundProduct.stock > 0 ? 1 : 0);
+        
+        // Cargar productos relacionados
+        const todosProductos = await productApi.getProductos(0, 100);
+        const relacionados = todosProductos.content
+          .filter(p => p.categoria.id === foundProduct.categoria.id && p.id !== foundProduct.id)
+          .slice(0, 4);
+        setProductosRelacionados(relacionados);
+      } catch (error) {
+        console.error('Error al cargar producto:', error);
+        setProducto(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadProducto();
+  }, [productId]);
 
-  // 4. Si el producto no se encuentra, mostrar un mensaje
+  // 4. Mostrar loading
+  if (isLoading) {
+    return (
+      <div className="container py-5 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Si el producto no se encuentra, mostrar un mensaje
   if (!producto) {
     return (
       <div className="container py-5">
@@ -111,7 +148,7 @@ function DetalleProductoPage() {
     addToCart(producto, cantidad);
   };
 
-  const { currentUser } = useAuth();
+  // Calcular descuento basado en el usuario actual
   const discountPercent =
     currentUser &&
     currentUser.email &&
@@ -138,7 +175,7 @@ function DetalleProductoPage() {
           <div className="col-md-6 mb-4">
             <div className="bg-white rounded-3 shadow-sm p-4">
               <img
-                src={mainImageSrc || producto.img}
+                src={mainImageSrc || (producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[0].url : "/Img/elementor-placeholder-image.png")}
                 alt={producto.nombre}
                 className="img-fluid"
                 style={{
@@ -169,14 +206,32 @@ function DetalleProductoPage() {
                           marginRight: 8,
                         }}
                       >
-                        ${producto.precio.toFixed(2)}
+                        {formatCLP(producto.precio)}
                       </span>
-                      <span>${displayedPrice.toFixed(2)}</span>
+                      <span>{formatCLP(displayedPrice)}</span>
                     </>
                   ) : (
-                    <>${producto.precio.toFixed(2)}</>
+                    <>{formatCLP(producto.precio)}</>
                   )}
                 </span>
+              </div>
+
+              {/* Indicador de stock */}
+              <div className="mb-3">
+                {producto.stock > 0 ? (
+                  <div className="d-flex align-items-center">
+                    <i className="bi bi-box-seam text-success me-2" style={{ fontSize: "1.5rem" }}></i>
+                    <div>
+                      <div className="fw-bold text-success">Disponible en stock</div>
+                      <small className="text-muted">{producto.stock} {producto.stock === 1 ? 'unidad disponible' : 'unidades disponibles'}</small>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="d-flex align-items-center">
+                    <i className="bi bi-x-circle text-danger me-2" style={{ fontSize: "1.5rem" }}></i>
+                    <div className="fw-bold text-danger">Producto agotado</div>
+                  </div>
+                )}
               </div>
 
               {/* Badge para pocas unidades: mostrar si stock entre 1 y 4 */}
@@ -185,7 +240,7 @@ function DetalleProductoPage() {
                 producto.stock < 5 && (
                   <div className="mb-3">
                     <span className="badge bg-warning text-dark">
-                      Pocas unidades disponibles ({producto.stock})
+                      ⚠️ ¡Pocas unidades! Solo quedan {producto.stock}
                     </span>
                   </div>
                 )}
@@ -293,18 +348,11 @@ function DetalleProductoPage() {
         <div className="mt-5">
           <h3 className="mb-4">Productos Relacionados</h3>
           <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-            {productosArray
-              .filter(
-                (p) =>
-                  p.categoria.nombre === producto.categoria.nombre &&
-                  p.id !== producto.id
-              )
-              .slice(0, 4)
-              .map((p) => (
-                <div key={p.id} className="col">
+            {productosRelacionados.map((p) => (
+                  <div key={p.id} className="col">
                   <div className="card h-100 shadow-sm">
                     <img
-                      src={p.img}
+                      src={p.imagenes && p.imagenes.length > 0 ? p.imagenes[0].url : "/Img/elementor-placeholder-image.png"}
                       className="card-img-top"
                       alt={p.nombre}
                       style={{
@@ -318,7 +366,7 @@ function DetalleProductoPage() {
                     <div className="card-body">
                       <h6 className="card-title">{p.nombre}</h6>
                       <p className="text-primary fw-bold">
-                        ${p.precio.toFixed(2)}
+                        {formatCLP(p.precio)}
                       </p>
                       <button
                         className="btn btn-sm btn-primary w-100"

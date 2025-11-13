@@ -3,8 +3,20 @@ import { regionesYComunas } from "../data/locations";
 import { useCart } from "../contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import * as orderApi from "../api/orderApi";
+import type { DireccionRequest } from "../api/orderApi";
 import type { Address, Card } from "../data/checkout";
-import { loadSavedAddresses, saveAddresses, loadSavedCards, saveCards, processPayment } from "../data/checkout";
+import { loadSavedAddresses, saveAddresses, loadSavedCards, saveCards } from "../data/checkout";
+
+// Helper para formatear precios en CLP
+const formatCLP = (precio: number) => {
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(precio);
+};
 
 function CheckoutPage() {
   const { getCartDetails, clearCart } = useCart();
@@ -136,7 +148,7 @@ function CheckoutPage() {
     setCardExpiry("");
   };
 
-  const handlePay = () => {
+  const handlePay = async () => {
     // Validar dirección: debe tener una seleccionada o todos los campos del formulario nuevo
     const hasSelectedAddress = selectedAddressId && addresses.find(a => a.id === selectedAddressId);
     const hasNewAddress = newAddr.nombre && newAddr.apellido && newAddr.correo && 
@@ -154,43 +166,54 @@ function CheckoutPage() {
       return;
     }
 
-    // Usar la dirección seleccionada o los datos del formulario (sin guardar de nuevo)
-    let addr;
+    // Preparar dirección para el pedido
+    let direccionEnvio: DireccionRequest;
     if (hasSelectedAddress) {
-      addr = addresses.find((a) => a.id === selectedAddressId)!;
+      const addr = addresses.find((a) => a.id === selectedAddressId)!;
+      direccionEnvio = {
+        calle: addr.calle,
+        numero: addr.depto || "S/N",
+        comuna: addr.comuna,
+        ciudad: addr.comuna,
+        region: addr.region,
+        indicaciones: addr.instrucciones,
+      };
     } else {
-      // Usar los datos del formulario directamente sin guardar
-      addr = {
-        id: String(Date.now()),
-        nombre: newAddr.nombre || "",
-        apellido: newAddr.apellido || "",
-        correo: newAddr.correo || "",
+      direccionEnvio = {
         calle: newAddr.calle || "",
-        depto: newAddr.depto || "",
-        region: newAddr.region || "",
+        numero: newAddr.depto || "S/N",
         comuna: newAddr.comuna || "",
-        instrucciones: newAddr.instrucciones || "",
+        ciudad: newAddr.comuna || "",
+        region: newAddr.region || "",
+        indicaciones: newAddr.instrucciones,
       };
     }
 
-    // Empezar procesamiento visual
-    setPaymentStatus("processing");
+    try {
+      // Empezar procesamiento visual
+      setPaymentStatus("processing");
 
-    // Procesar el pago
-    processPayment(cart, currentUser ? {
-      id: currentUser.id,
-      nombre: currentUser.nombre || '',
-      apellido: currentUser.apellido || '',
-      email: currentUser.email || ''
-    } : null, addr).then(({ success, orderId }) => {
-      setOrderNumber(String(orderId));
-      setPaymentStatus(success ? "success" : "failure");
+      // Crear pedido usando la API
+      const pedido = await orderApi.createPedido({
+        items: cart.map(item => ({
+          productoId: item.id,
+          cantidad: item.cantidad,
+        })),
+        nuevaDireccion: direccionEnvio,
+        metodoPago: 'TARJETA',
+      });
+
+      setOrderNumber(String(pedido.id));
+      setPaymentStatus("success");
+      clearCart();
       
-      if (success) {
-        // Limpiar carrito pero mantener confirmación en página
-        clearCart();
-      }
-    });
+      // Mostrar mensaje de éxito
+      alert(`¡Pedido realizado con éxito! Número de pedido: ${pedido.numeroPedido}`);
+    } catch (error: any) {
+      console.error('Error al procesar pago:', error);
+      setPaymentStatus("failure");
+      alert(error.response?.data?.mensaje || 'Error al procesar el pago');
+    }
   };
 
   return (
@@ -507,7 +530,7 @@ function CheckoutPage() {
               <div className="border-bottom pb-3">
                 <div className="d-flex justify-content-between mb-2">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>{formatCLP(subtotal)}</span>
                 </div>
                 <div className="d-flex justify-content-between mb-2">
                   <span>Envío</span>
@@ -515,13 +538,13 @@ function CheckoutPage() {
                 </div>
                 <div className="d-flex justify-content-between mb-2">
                   <span>IVA incluido</span>
-                  <span>${(subtotal * 0.19).toFixed(2)}</span>
+                  <span>{formatCLP(subtotal * 0.19)}</span>
                 </div>
               </div>
 
               <div className="d-flex justify-content-between align-items-center py-3">
                 <span className="h5 mb-0">TOTAL</span>
-                <span className="h5 mb-0">${subtotal.toFixed(2)}</span>
+                <span className="h5 mb-0">{formatCLP(subtotal)}</span>
               </div>
 
               <div className="mt-4">
@@ -591,8 +614,8 @@ function CheckoutPage() {
                       </td>
                       <td>{it.nombre}</td>
                       <td>{it.cantidad}</td>
-                      <td>${it.precio.toFixed(2)}</td>
-                      <td>${(it.precio * it.cantidad).toFixed(2)}</td>
+                      <td>{formatCLP(it.precio)}</td>
+                      <td>{formatCLP(it.precio * it.cantidad)}</td>
                     </tr>
                   ))
                 )}

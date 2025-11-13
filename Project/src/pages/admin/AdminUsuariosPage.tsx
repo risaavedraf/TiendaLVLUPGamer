@@ -1,23 +1,38 @@
 // Archivo: Project/src/pages/admin/AdminUsuariosPage.tsx
 
-import { useState } from 'react';
-import { usersArray as initialUsers } from '../../data/users';
-import type { User } from '../../data/users';
-import Modal from '../../component/Model'; // 1. Importar el Modal // Importamos los usuarios iniciales y el tipo
-
-// (Más adelante crearemos el componente Modal)
-// import Modal from '../../components/Modal'; 
+import { useState, useEffect } from 'react';
+import * as userApi from '../../api/userApi';
+import type { UsuarioResponse } from '../../api/userApi';
+import Modal from '../../component/Model'; 
 
 function AdminUsuariosPage() {
-  // 1. Estado para la lista de usuarios (inicializado con los datos importados)
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  // 1. Estado para la lista de usuarios
+  const [users, setUsers] = useState<UsuarioResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // 2. Estado para el modo de eliminación (lógica de administrador.js)
+  // 2. Estado para el modo de eliminación
   const [deleteMode, setDeleteMode] = useState(false);
   
-  // 3. Estado para controlar el modal (lo usaremos después)
+  // 3. Estado para controlar el modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // const [currentUserToEdit, setCurrentUserToEdit] = useState<User | null>(null); // Para editar en el futuro
+
+  // Cargar usuarios al montar
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      setIsLoading(true);
+      const data = await userApi.getAllUsuarios(0, 100);
+      setUsers(data.content);
+    } catch (error) {
+      console.error('Error al cargar usuarios:', error);
+      alert('Error al cargar usuarios');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // --- Funciones de Gestión ---
 
@@ -25,10 +40,16 @@ function AdminUsuariosPage() {
     setDeleteMode(!deleteMode);
   };
 
-  const deleteUser = (id: number) => {
-    if (window.confirm(`¿Estás seguro de eliminar al usuario con ID ${id}?`)) {
-      setUsers(currentUsers => currentUsers.filter(user => user.id !== id));
-      // En una app real, aquí llamarías a la API para eliminar
+  const deleteUser = async (id: number) => {
+    if (window.confirm(`¿Estás seguro de desactivar al usuario con ID ${id}?`)) {
+      try {
+        await userApi.desactivarUsuario(id);
+        await loadUsers(); // Recargar la lista
+        alert('Usuario desactivado correctamente');
+      } catch (error) {
+        console.error('Error al desactivar usuario:', error);
+        alert('Error al desactivar usuario');
+      }
     }
   };
 
@@ -36,21 +57,36 @@ function AdminUsuariosPage() {
     //setCurrentUserToEdit(null); // Asegura que es para añadir, no editar
     setIsModalOpen(true);
   };
-  const handleSaveUser = (userData: User) => {
-    // Lógica simple para añadir (sin editar por ahora)
-    const newUser = {
-      ...userData,
-      // Generar un ID simple (en una app real, la API lo haría)
-      id: Math.max(0, ...users.map(u => u.id)) + 1, 
-      // Asegurarse de que la contraseña (si no se editó) no se pierda
-      contrasenia: userData.contrasenia || 'default123' 
-    };
-    setUsers(currentUsers => [...currentUsers, newUser]);
-    
-    // Aquí también podrías llamar a una API para guardar
+  const handleSaveUser = async (userData: any) => {
+    try {
+      // Por ahora solo soportamos actualización
+      if (userData.id) {
+        await userApi.updateUsuario(userData.id, {
+          nombre: userData.nombre,
+          apellido: userData.apellido,
+          run: userData.run,
+          direccion: userData.direccion,
+        });
+        await loadUsers();
+        alert('Usuario actualizado correctamente');
+      }
+    } catch (error: any) {
+      console.error('Error al guardar usuario:', error);
+      alert(error.response?.data?.mensaje || 'Error al guardar usuario');
+    }
   };
   
   // --- Renderizado ---
+  if (isLoading) {
+    return (
+      <div className="text-center py-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div id="users" className="section"> {/* Mantenemos ID por si el CSS lo usa */}
       <h2>👥 Gestión de Usuarios</h2>
@@ -89,18 +125,17 @@ function AdminUsuariosPage() {
               <tr key={user.id}>
                 <td>{user.id}</td>
                 <td>{user.run || 'N/A'}</td>
-                <td>{user.nombre}</td>
-                <td>{user.apellido || 'N/A'}</td>
+                <td>{user.nombre || user.name || 'N/A'}</td>
+                <td>{user.apellido || user.lastName || 'N/A'}</td>
                 <td>{user.email}</td>
                 <td>{user.direccion || 'N/A'}</td>
-                <td>{user.rol}</td>
-                {/* 5. Mostramos el botón de eliminar solo en modo 'deleteMode' */}
+                <td>{user.roles ? user.roles.join(', ') : 'N/A'}</td>
                 {deleteMode && (
                   <td>
-                    <button 
-                      className="btn btn-danger btn-sm delete-x" // Clase CSS + Bootstrap
+                    <button
+                      className="btn btn-danger btn-sm delete-x"
                       onClick={() => deleteUser(user.id)}
-                      title={`Eliminar ${user.nombre}`}
+                      title={`Eliminar ${user.nombre || user.name}`}
                     >
                       ❌
                     </button>

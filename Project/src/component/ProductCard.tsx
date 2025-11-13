@@ -1,21 +1,42 @@
 // Archivo: Project/src/components/ProductCard.tsx
 // (Versión final y corregida)
 
-import type { Product } from "../data/products";
+import type { ProductoResponse } from "../api/productApi";
 import { Link } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { renderStockBadge } from "../utils/stock";
 import { getAverageRating } from "../utils/reviews";
 
+// Helper para formatear precios en CLP
+const formatCLP = (precio: number) => {
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(precio);
+};
+
 interface ProductCardProps {
-  producto: Product;
+  producto: ProductoResponse;
 }
 
 function ProductCard({ producto }: ProductCardProps) {
   const { addToCart } = useCart();
   const { currentUser } = useAuth();
   const avg = getAverageRating(producto.id);
+
+  // Adaptar ProductoResponse a Product para el carrito
+  const productoParaCarrito = {
+    id: producto.id,
+    nombre: producto.nombre,
+    descripcion: producto.descripcion,
+    precio: producto.precio,
+    stock: producto.stock,
+    img: producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[0].url : "/Img/elementor-placeholder-image.png",
+    categoria: producto.categoria,
+  };
 
   const discountPercent =
     currentUser &&
@@ -56,7 +77,7 @@ function ProductCard({ producto }: ProductCardProps) {
       <div className="card h-100 shadow-sm border-0 product-card">
         <Link to={`/producto/${producto.id}`} className="text-decoration-none">
           <img
-            src={producto.img}
+            src={producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[0].url : "/Img/elementor-placeholder-image.png"}
             className="card-img-top"
             alt={producto.nombre}
             loading="lazy"
@@ -102,12 +123,12 @@ function ProductCard({ producto }: ProductCardProps) {
                         marginRight: 6,
                       }}
                     >
-                      ${producto.precio.toFixed(2)}
+                      {formatCLP(producto.precio)}
                     </span>
-                    <span>${discountedPrice.toFixed(2)}</span>
+                    <span>{formatCLP(discountedPrice)}</span>
                   </>
                 ) : (
-                  <>${producto.precio.toFixed(2)}</>
+                  <>{formatCLP(producto.precio)}</>
                 )}
               </span>
               <div className="text-end small">
@@ -121,7 +142,23 @@ function ProductCard({ producto }: ProductCardProps) {
                 )}
               </div>
             </div>
-            {/* Badge de stock (si corresponde) justo encima del botón */}
+            
+            {/* Mostrar stock disponible */}
+            <div className="mb-2">
+              {producto.stock > 0 ? (
+                <small className="text-muted">
+                  <i className="bi bi-box-seam me-1"></i>
+                  Stock disponible: <strong>{producto.stock}</strong> {producto.stock === 1 ? 'unidad' : 'unidades'}
+                </small>
+              ) : (
+                <small className="text-danger fw-bold">
+                  <i className="bi bi-x-circle me-1"></i>
+                  Sin stock
+                </small>
+              )}
+            </div>
+            
+            {/* Badge de stock (si corresponde) */}
             <div className="mb-2">{renderStockBadge(producto.stock)}</div>
 
             {/* Botón deshabilitado si está agotado */}
@@ -136,7 +173,7 @@ function ProductCard({ producto }: ProductCardProps) {
             ) : (
               <button
                 className="btn btn-primary w-100"
-                onClick={() => addToCart(producto)}
+                onClick={() => addToCart(productoParaCarrito)}
               >
                 🛒 Añadir al Carrito
               </button>

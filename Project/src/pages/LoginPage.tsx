@@ -25,12 +25,16 @@ function LoginPage() {
 
     try {
       // 7. Llamar a la función 'login' de nuestro contexto
-      await login(email, password);
+      const user = await login(email, password);
 
-      // 8. No redirigir directamente a la sección de administración.
-      // Siempre llevamos al usuario al Home; los admins verán un botón
-      // en el menú para acceder a la zona de administración si lo desean.
-      navigate("/"); // Redirigir al Home
+      // 8. Verificar si el usuario es admin y redirigir según su rol
+      const isAdmin = user.roles.some(role => role === "ROLE_ADMIN" || role.includes("ADMIN"));
+      
+      if (isAdmin) {
+        navigate("/admin/dashboard"); // Redirigir a dashboard de admin
+      } else {
+        navigate("/"); // Redirigir al Home para usuarios normales
+      }
     } catch (err: any) {
       // 9. Si el login falla (promesa rechazada), mostrar el error
       setError(err.message || "Error al iniciar sesión");

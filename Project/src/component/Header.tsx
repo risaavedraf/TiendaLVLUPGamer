@@ -118,9 +118,11 @@ function Header() {
                 <span className="text-white me-3" id="mensaje-bienvenida">
                   Bienvenido, {currentUser.nombre}
                 </span>
-                {/* If the logged-in user is an admin, show a button to go to the admin area */}
-                {currentUser?.rol?.toLowerCase() === "admin" && (
-                  <Link to="/admin" className="btn btn-outline-light me-2">
+                
+                {/* Mostrar botón de Admin solo si el usuario tiene rol ROLE_ADMIN */}
+                {currentUser?.roles?.some(role => role === "ROLE_ADMIN") && (
+                  <Link to="/admin/dashboard" className="btn btn-outline-light me-2">
+                    <i className="bi bi-gear-fill me-1"></i>
                     Admin
                   </Link>
                 )}

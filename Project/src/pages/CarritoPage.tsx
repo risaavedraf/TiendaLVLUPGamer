@@ -6,6 +6,16 @@ import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
+// Helper para formatear precios en CLP
+const formatCLP = (precio: number) => {
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(precio);
+};
+
 // 1. Definimos el tipo para el VALOR del objeto de códigos
 type DescuentoInfo = {
   tipo: "porcentaje" | "fijo";
@@ -193,20 +203,20 @@ function CarritoPage() {
                 <ul className="list-group list-group-flush">
                   <li className="list-group-item d-flex justify-content-between align-items-center">
                     Subtotal
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>{formatCLP(subtotal)}</span>
                   </li>
 
                   {appliedDiscount && (
                     <li className="list-group-item d-flex justify-content-between align-items-center text-danger">
                       Descuento ({appliedDiscount.codigo})
-                      <span>-${montoDescuento.toFixed(2)}</span>
+                      <span>-{formatCLP(montoDescuento)}</span>
                     </li>
                   )}
 
                   <li className="list-group-item d-flex justify-content-between align-items-center">
                     <strong>Total</strong>
                     <strong>
-                      <span>${totalFinal.toFixed(2)}</span>
+                      <span>{formatCLP(totalFinal)}</span>
                     </strong>
                   </li>
                 </ul>

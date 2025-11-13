@@ -1,58 +1,60 @@
 // Archivo: Project/src/contexts/AuthContext.tsx
 
-import { createContext, useState, useContext,useEffect } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { usersArray } from '../data/users';
-import type { User } from '../data/users';
+import * as authApi from '../api/authApi';
+import type { UsuarioResponse } from '../api/authApi';
 
-// Definimos los datos del usuario registrado en localStorage de registro.js
-type RegisteredUser = {
+// Tipos adaptados para compatibilidad con el código existente
+export type User = {
+  id: number;
+  nombre: string;
+  apellido: string;
+  email: string;
+  run?: string;
+  direccion?: string;
+  roles: string[]; // Cambiar de 'rol' a 'roles'
+};
+
+type RegisterData = {
   nombre: string;
   apellido: string;
   correo: string;
   contrasena: string;
-  rol: "Usuario"; // Asumimos que el rol por defecto es Usuario
-}
+  fechaNacimiento?: string; // Opcional para formularios existentes
+};
 
 type AuthContextType = {
   currentUser: User | null;
   login: (email: string, contrasenia: string) => Promise<User>;
   logout: () => void;
-  register: (newUser: Omit<RegisteredUser, 'rol'>) => Promise<void>; // 1. Añadir register
+  register: (newUser: RegisterData) => Promise<void>;
+  updateProfile: (userData: Partial<User>) => Promise<void>;
+  isLoading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Función para cargar todos los usuarios (BD + LocalStorage)
-const getAllUsers = (): User[] => {
-  const localUsers: User[] = [];
-  const usuariosRegistrados: RegisteredUser[] = JSON.parse(localStorage.getItem('usuariosRegistrados') || '[]');
-  
-  usuariosRegistrados.forEach((u, idx) => {
-    localUsers.push({
-      id: usersArray.length + idx + 1, // ID único
-      nombre: u.nombre,
-      apellido: u.apellido,
-      email: u.correo,
-      contrasenia: u.contrasena,
-      rol: u.rol || "Usuario",
-    });
-  });
-  
-  // Combinamos la "base de datos" con los usuarios del localStorage
-  return [...usersArray, ...localUsers];
-};
-
+// Función helper para convertir UsuarioResponse a User
+const mapUsuarioToUser = (usuario: UsuarioResponse): User => ({
+  id: usuario.id,
+  nombre: usuario.name || usuario.nombre || '',
+  apellido: usuario.lastName || usuario.apellido || '',
+  email: usuario.email,
+  run: usuario.run,
+  direccion: usuario.direccion,
+  roles: usuario.roles || [],
+});
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    // Replicamos la lógica de administrador.js
     const usuarioLogueado = localStorage.getItem('usuarioLogueado');
     return usuarioLogueado ? JSON.parse(usuarioLogueado) : null;
   });
 
-  // Efecto para guardar/limpiar el usuario en localStorage
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Efecto para sincronizar usuario con localStorage
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('usuarioLogueado', JSON.stringify(currentUser));
@@ -61,58 +63,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [currentUser]);
 
-  // Lógica de Login
-  const login = (email: string, contrasenia: string): Promise<User> => {
-    return new Promise((resolve, reject) => {
-      const allUsers = getAllUsers();
-      
-      const user = allUsers.find(
-        (u) => u.email === email && u.contrasenia === contrasenia
-      );
-
-      if (user) {
-        setCurrentUser(user);
-        resolve(user); // Éxito
-      } else {
-        reject(new Error("Correo o contraseña incorrectos")); // Error
-      }
-    });
+  // Lógica de Login usando API real
+  const login = async (email: string, contrasenia: string): Promise<User> => {
+    try {
+      setIsLoading(true);
+      const response = await authApi.login({ email, password: contrasenia }); // Cambiar contrasenia a password
+      const user = mapUsuarioToUser(response.usuario);
+      setCurrentUser(user);
+      return user;
+    } catch (error: any) {
+      console.error('Error en login:', error);
+      throw new Error(error.response?.data?.mensaje || 'Correo o contraseña incorrectos');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Lógica de Logout
+  // Lógica de Logout usando API
   const logout = () => {
+    authApi.logout();
     setCurrentUser(null);
-    // (La redirección la manejaremos en el componente Header)
   };
 
-  // 2. Nueva función REGISTER (lógica de registro.js)
-  const register = (newUser: Omit<RegisteredUser, 'rol'>): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const usuariosRegistrados: RegisteredUser[] = JSON.parse(localStorage.getItem('usuariosRegistrados') || '[]');
+  // Lógica de Registro usando API real
+  const register = async (newUser: RegisterData): Promise<void> => {
+    try {
+      setIsLoading(true);
       
-      // Validar si el correo ya existe
-      if (usuariosRegistrados.some(u => u.correo === newUser.correo)) {
-        reject(new Error("El correo ya está registrado."));
-        return;
-      }
+      // Generar username a partir del email (o usar el nombre)
+      const username = newUser.correo.split('@')[0];
       
-      // Añadir el nuevo usuario con el rol por defecto
-      const userToSave: RegisteredUser = {
-        ...newUser,
-        rol: "Usuario"
-      };
-      
-      usuariosRegistrados.push(userToSave);
-      localStorage.setItem('usuariosRegistrados', JSON.stringify(usuariosRegistrados));
-      resolve();
-    });
+      await authApi.registro({
+        username: username,
+        email: newUser.correo,
+        password: newUser.contrasena,
+        name: newUser.nombre,
+        lastName: newUser.apellido,
+        birthDate: newUser.fechaNacimiento || '2000-01-01', // Fecha por defecto si no se proporciona
+      });
+    } catch (error: any) {
+      console.error('Error en registro:', error);
+      throw new Error(error.response?.data?.mensaje || 'Error al registrar usuario');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Nueva función para actualizar perfil
+  const updateProfile = async (userData: Partial<User>): Promise<void> => {
+    try {
+      setIsLoading(true);
+      const response = await authApi.updatePerfil(userData);
+      const updatedUser = mapUsuarioToUser(response);
+      setCurrentUser(updatedUser);
+    } catch (error: any) {
+      console.error('Error al actualizar perfil:', error);
+      throw new Error(error.response?.data?.mensaje || 'Error al actualizar perfil');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const value = {
     currentUser,
     login,
     logout,
-    register 
+    register,
+    updateProfile,
+    isLoading,
   };
 
   return (
