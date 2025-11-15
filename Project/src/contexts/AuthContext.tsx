@@ -68,14 +68,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, contrasenia: string): Promise<User> => {
     try {
       setIsLoading(true);
-      const response = await authApi.login({ email, password: contrasenia }); // Cambiar contrasenia a password
+      
+      console.log("Intentando login con email:", email);
+      
+      const response = await authApi.login({ email, password: contrasenia });
+      
+      console.log("Respuesta del login:", response);
+      
       const user = mapUsuarioToUser(response.usuario);
       setCurrentUser(user);
       return user;
     } catch (error: any) {
-      console.error("Error en login:", error);
+      console.error("Error completo en login:", error);
+      console.error("Error response:", error.response);
+      console.error("Error data:", error.response?.data);
+      
+      // Mensajes de error más específicos
+      if (error.response?.status === 500) {
+        throw new Error("Error del servidor. Por favor, verifica que el backend esté funcionando correctamente.");
+      }
+      
       throw new Error(
-        error.response?.data?.mensaje || "Correo o contraseña incorrectos"
+        error.response?.data?.mensaje || 
+        error.response?.data?.message || 
+        error.response?.data?.error || 
+        "Correo o contraseña incorrectos"
       );
     } finally {
       setIsLoading(false);
@@ -96,18 +113,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Generar username a partir del email (o usar el nombre)
       const username = newUser.username || newUser.email.split("@")[0];
 
-      await authApi.registro({
+      // Preparar los datos para enviar al backend
+      const registroData = {
         username: username,
-        email: newUser.email,
+        email: newUser.email.trim().toLowerCase(), // Normalizar email
         password: newUser.contrasena,
         name: newUser.name,
         lastName: newUser.lastname,
         birthDate: newUser.fechaNacimiento || "2000-01-01", // Fecha por defecto si no se proporciona
-      });
+      };
+
+      console.log("Datos de registro a enviar:", registroData);
+
+      await authApi.registro(registroData);
     } catch (error: any) {
       console.error("Error en registro:", error);
+      console.error("Detalles del error:", error.response?.data);
+      
+      // Manejo específico para error 409 (Conflict)
+      if (error.response?.status === 409) {
+        const errorMsg = error.response?.data?.error || error.response?.data?.message;
+        if (errorMsg && errorMsg.includes("email")) {
+          throw new Error("El email ya está registrado. Por favor, usa otro email o inicia sesión.");
+        }
+        throw new Error(errorMsg || "El usuario ya existe. Intenta con otros datos.");
+      }
+      
       throw new Error(
-        error.response?.data?.mensaje || "Error al registrar usuario"
+        error.response?.data?.mensaje || error.response?.data?.error || error.response?.data?.message || "Error al registrar usuario"
       );
     } finally {
       setIsLoading(false);

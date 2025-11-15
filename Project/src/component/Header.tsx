@@ -116,11 +116,11 @@ function Header() {
               // Vista Usuario
               <div id="vista-usuario">
                 <span className="text-white me-3" id="mensaje-bienvenida">
-                  Bienvenido, {currentUser.nombre}
+                  Bienvenido, {currentUser.name || currentUser.username || currentUser.email}
                 </span>
                 
                 {/* Mostrar botón de Admin solo si el usuario tiene rol ROLE_ADMIN */}
-                {currentUser?.roles?.some(role => role === "ROLE_ADMIN") && (
+                {currentUser?.roles?.some(role => role === "ROLE_ADMIN" || role === "ADMIN") && (
                   <Link to="/admin/dashboard" className="btn btn-outline-light me-2">
                     <i className="bi bi-gear-fill me-1"></i>
                     Admin

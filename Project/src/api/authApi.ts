@@ -48,10 +48,14 @@ export interface RegistroRequest {
 export const login = async (
   credentials: LoginRequest
 ): Promise<LoginResponse> => {
+  console.log("Enviando credenciales de login:", { email: credentials.email, password: "***" });
+  
   const response = await axiosInstance.post<LoginResponse>(
     "/auth/login",
     credentials
   );
+  
+  console.log("Respuesta de login recibida:", response.data);
 
   // Guardar el token en localStorage
   if (response.data.token) {
@@ -72,6 +76,8 @@ export const login = async (
 export const registro = async (
   userData: RegistroRequest
 ): Promise<UsuarioResponse> => {
+  console.log("Enviando datos de registro al backend:", userData);
+  
   const response = await axiosInstance.post<UsuarioResponse>(
     "/auth/register",
     userData

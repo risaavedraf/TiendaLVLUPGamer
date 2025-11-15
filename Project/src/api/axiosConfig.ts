@@ -2,7 +2,9 @@
 import axios from 'axios';
 
 // URL base del backend - Cambiar según tu configuración
-const API_BASE_URL = 'http://localhost:8080/api';
+// Si tu backend está en AWS, reemplaza con la URL de AWS
+// Ejemplo: 'https://tu-api.amazonaws.com/api' o 'http://tu-ip-aws:8080/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 // Crear instancia de Axios con configuración por defecto
 const axiosInstance = axios.create({
@@ -59,6 +61,11 @@ axiosInstance.interceptors.response.use(
         case 404:
           // No encontrado
           console.error('Recurso no encontrado.');
+          break;
+          
+        case 409:
+          // Conflicto - Email o username ya existe
+          console.error('El email o nombre de usuario ya está registrado.');
           break;
           
         case 500:

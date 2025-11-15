@@ -81,7 +81,12 @@ function ProductCard({ producto }: ProductCardProps) {
             className="card-img-top"
             alt={producto.nombre}
             loading="lazy"
-            style={{ height: "250px", objectFit: "contain", padding: "1rem" }}
+            decoding="async"
+            style={{ height: "250px", objectFit: "contain", padding: "1rem", backgroundColor: "#f8f9fa" }}
+            onError={(e) => {
+              // Si falla la carga, usar imagen placeholder
+              (e.target as HTMLImageElement).src = "/Img/elementor-placeholder-image.png";
+            }}
           />
         </Link>
         <div className="card-body d-flex flex-column">

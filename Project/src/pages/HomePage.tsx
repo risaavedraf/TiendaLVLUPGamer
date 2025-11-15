@@ -15,7 +15,8 @@ function HomePage() {
     const loadProductos = async () => {
       try {
         setIsLoading(true);
-        const data = await productApi.getProductos(0, 50);
+        // Cargar solo 12 productos inicialmente para mejorar rendimiento
+        const data = await productApi.getProductos(0, 12);
         setProductos(data.content);
       } catch (error) {
         console.error('Error al cargar productos:', error);
