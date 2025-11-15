@@ -1,9 +1,9 @@
 // Archivo: Project/src/contexts/AuthContext.tsx
 
-import { createContext, useState, useContext, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import * as authApi from '../api/authApi';
-import type { UsuarioResponse } from '../api/authApi';
+import { createContext, useState, useContext, useEffect } from "react";
+import type { ReactNode } from "react";
+import * as authApi from "../api/authApi";
+import type { UsuarioResponse } from "../api/authApi";
 
 // Tipos adaptados para compatibilidad con el código existente
 export type User = {
@@ -11,8 +11,8 @@ export type User = {
   nombre: string;
   apellido: string;
   email: string;
-  run?: string;
-  direccion?: string;
+  username?: string;
+  fechaNacimiento?: string;
   roles: string[]; // Cambiar de 'rol' a 'roles'
 };
 
@@ -20,6 +20,7 @@ type RegisterData = {
   nombre: string;
   apellido: string;
   correo: string;
+  username?: string;
   contrasena: string;
   fechaNacimiento?: string; // Opcional para formularios existentes
 };
@@ -38,17 +39,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Función helper para convertir UsuarioResponse a User
 const mapUsuarioToUser = (usuario: UsuarioResponse): User => ({
   id: usuario.id,
-  nombre: usuario.name || usuario.nombre || '',
-  apellido: usuario.lastName || usuario.apellido || '',
+  nombre: usuario.nombre || usuario.nombre || "",
+  apellido: usuario.apellido || usuario.apellido || "",
+  username: usuario.username || usuario.username || "",
+  fechaNacimiento: usuario.fechaNacimiento || usuario.fechaNacimiento || "",
   email: usuario.email,
-  run: usuario.run,
-  direccion: usuario.direccion,
   roles: usuario.roles || [],
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const usuarioLogueado = localStorage.getItem('usuarioLogueado');
+    const usuarioLogueado = localStorage.getItem("usuarioLogueado");
     return usuarioLogueado ? JSON.parse(usuarioLogueado) : null;
   });
 
@@ -57,9 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Efecto para sincronizar usuario con localStorage
   useEffect(() => {
     if (currentUser) {
-      localStorage.setItem('usuarioLogueado', JSON.stringify(currentUser));
+      localStorage.setItem("usuarioLogueado", JSON.stringify(currentUser));
     } else {
-      localStorage.removeItem('usuarioLogueado');
+      localStorage.removeItem("usuarioLogueado");
     }
   }, [currentUser]);
 
@@ -72,8 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCurrentUser(user);
       return user;
     } catch (error: any) {
-      console.error('Error en login:', error);
-      throw new Error(error.response?.data?.mensaje || 'Correo o contraseña incorrectos');
+      console.error("Error en login:", error);
+      throw new Error(
+        error.response?.data?.mensaje || "Correo o contraseña incorrectos"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -89,21 +92,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (newUser: RegisterData): Promise<void> => {
     try {
       setIsLoading(true);
-      
+
       // Generar username a partir del email (o usar el nombre)
-      const username = newUser.correo.split('@')[0];
-      
+      const username = newUser.username || newUser.correo.split("@")[0];
+
       await authApi.registro({
         username: username,
         email: newUser.correo,
         password: newUser.contrasena,
         name: newUser.nombre,
         lastName: newUser.apellido,
-        birthDate: newUser.fechaNacimiento || '2000-01-01', // Fecha por defecto si no se proporciona
+        birthDate: newUser.fechaNacimiento || "2000-01-01", // Fecha por defecto si no se proporciona
       });
     } catch (error: any) {
-      console.error('Error en registro:', error);
-      throw new Error(error.response?.data?.mensaje || 'Error al registrar usuario');
+      console.error("Error en registro:", error);
+      throw new Error(
+        error.response?.data?.mensaje || "Error al registrar usuario"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -117,8 +122,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const updatedUser = mapUsuarioToUser(response);
       setCurrentUser(updatedUser);
     } catch (error: any) {
-      console.error('Error al actualizar perfil:', error);
-      throw new Error(error.response?.data?.mensaje || 'Error al actualizar perfil');
+      console.error("Error al actualizar perfil:", error);
+      throw new Error(
+        error.response?.data?.mensaje || "Error al actualizar perfil"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -133,18 +140,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 // Hook personalizado
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
   }
   return context;
 }
