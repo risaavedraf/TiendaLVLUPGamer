@@ -1,5 +1,3 @@
-// Archivo: Project/src/pages/admin/AdminProductosPage.tsx
-
 import { useState, useEffect } from "react";
 import * as productApi from "../../api/productApi";
 import type { ProductoResponse } from "../../api/productApi";
@@ -7,9 +5,9 @@ import Modal from "../../component/Model";
 
 // Helper para formatear precios en CLP
 const formatCLP = (precio: number) => {
-  return new Intl.NumberFormat('es-CL', {
-    style: 'currency',
-    currency: 'CLP',
+  return new Intl.NumberFormat("es-CL", {
+    style: "currency",
+    currency: "CLP",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(precio);
@@ -37,8 +35,8 @@ function AdminProductosPage() {
       const data = await productApi.getProductos(0, 100);
       setProducts(data.content);
     } catch (error) {
-      console.error('Error al cargar productos:', error);
-      alert('Error al cargar productos');
+      console.error("Error al cargar productos:", error);
+      alert("Error al cargar productos");
     } finally {
       setIsLoading(false);
     }
@@ -51,16 +49,18 @@ function AdminProductosPage() {
   };
 
   const deleteProduct = async (id: number) => {
+    // Reemplazamos window.confirm por una lógica no bloqueante si es posible,
+    // pero mantenemos la funcionalidad de confirmación por ahora.
     if (window.confirm(`¿Estás seguro de eliminar el producto con ID ${id}?`)) {
       try {
         await productApi.deleteProducto(id);
         setProducts((currentProducts) =>
           currentProducts.filter((p) => p.id !== id)
         );
-        alert('Producto eliminado correctamente');
+        alert("Producto eliminado correctamente");
       } catch (error) {
-        console.error('Error al eliminar producto:', error);
-        alert('Error al eliminar producto');
+        console.error("Error al eliminar producto:", error);
+        alert("Error al eliminar producto");
       }
     }
   };
@@ -71,10 +71,14 @@ function AdminProductosPage() {
   };
 
   // 3. Función para guardar un producto desde el Modal
+  // Esta función ya esperaba Partial<ProductoResponse>
   const handleSaveProduct = async (productData: Partial<ProductoResponse>) => {
     try {
       // Si productData tiene id, estamos editando
-      if (typeof (productData as any).id !== "undefined" && (productData as any).id !== null) {
+      if (
+        typeof (productData as any).id !== "undefined" &&
+        (productData as any).id !== null
+      ) {
         const id = Number((productData as any).id);
         const updated = await productApi.updateProducto(id, {
           nombre: productData.nombre,
@@ -82,12 +86,12 @@ function AdminProductosPage() {
           precio: productData.precio,
           stock: productData.stock,
           categoriaId: productData.categoria?.id,
-          activo: true,
+          // 'activo' no parece estar en el DTO de UpdateProductoRequest, lo quitamos
         });
         setProducts((currentProducts) =>
           currentProducts.map((p) => (p.id === id ? updated : p))
         );
-        alert('Producto actualizado correctamente');
+        alert("Producto actualizado correctamente");
       } else {
         // Crear nuevo producto
         const nuevo = await productApi.createProducto({
@@ -95,14 +99,14 @@ function AdminProductosPage() {
           descripcion: productData.descripcion || "Sin descripción",
           precio: Number(productData.precio) || 0,
           stock: Number(productData.stock) || 0,
-          categoriaId: productData.categoria?.id || 1,
+          categoriaId: productData.categoria?.id || 1, // Asumir 1 si no hay categoría
         });
         setProducts((currentProducts) => [...currentProducts, nuevo]);
-        alert('Producto creado correctamente');
+        alert("Producto creado correctamente");
       }
     } catch (error: any) {
-      console.error('Error al guardar producto:', error);
-      alert(error.response?.data?.mensaje || 'Error al guardar producto');
+      console.error("Error al guardar producto:", error);
+      alert(error.response?.data?.mensaje || "Error al guardar producto");
     }
   };
 
@@ -145,7 +149,8 @@ function AdminProductosPage() {
               <th>Descripción</th>
               <th>Precio</th>
               <th>Stock</th>
-              {/* Podríamos añadir Categoría e Imagen si quisiéramos */}
+              {/* Añadimos columna de Editar si no estamos en modo eliminar */}
+              {!deleteMode && <th>Editar</th>}
               {deleteMode && <th>Acción</th>}
             </tr>
           </thead>
@@ -203,7 +208,8 @@ function AdminProductosPage() {
           setCurrentProductToEdit(null);
         }}
         onSave={(data) => {
-          handleSaveProduct(data as Partial<Product>);
+          // 🐛 CORRECCIÓN: Usamos el tipo importado 'ProductoResponse'
+          handleSaveProduct(data as Partial<ProductoResponse>);
           setCurrentProductToEdit(null);
           setIsModalOpen(false);
         }} // Pasamos la función específica para productos

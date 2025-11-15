@@ -8,8 +8,8 @@ import type { UsuarioResponse } from "../api/authApi";
 // Tipos adaptados para compatibilidad con el código existente
 export type User = {
   id: number;
-  nombre: string;
-  apellido: string;
+  name: string;
+  lastname: string;
   email: string;
   username?: string;
   fechaNacimiento?: string;
@@ -17,9 +17,9 @@ export type User = {
 };
 
 type RegisterData = {
-  nombre: string;
-  apellido: string;
-  correo: string;
+  name: string;
+  lastname: string;
+  email: string;
   username?: string;
   contrasena: string;
   fechaNacimiento?: string; // Opcional para formularios existentes
@@ -39,8 +39,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Función helper para convertir UsuarioResponse a User
 const mapUsuarioToUser = (usuario: UsuarioResponse): User => ({
   id: usuario.id,
-  nombre: usuario.nombre || usuario.nombre || "",
-  apellido: usuario.apellido || usuario.apellido || "",
+  name: usuario.nombre || usuario.nombre || "",
+  lastname: usuario.apellido || usuario.apellido || "",
   username: usuario.username || usuario.username || "",
   fechaNacimiento: usuario.fechaNacimiento || usuario.fechaNacimiento || "",
   email: usuario.email,
@@ -94,14 +94,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
 
       // Generar username a partir del email (o usar el nombre)
-      const username = newUser.username || newUser.correo.split("@")[0];
+      const username = newUser.username || newUser.email.split("@")[0];
 
       await authApi.registro({
         username: username,
-        email: newUser.correo,
+        email: newUser.email,
         password: newUser.contrasena,
-        name: newUser.nombre,
-        lastName: newUser.apellido,
+        name: newUser.name,
+        lastName: newUser.lastname,
         birthDate: newUser.fechaNacimiento || "2000-01-01", // Fecha por defecto si no se proporciona
       });
     } catch (error: any) {

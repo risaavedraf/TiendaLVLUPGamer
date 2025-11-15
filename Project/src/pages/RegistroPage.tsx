@@ -1,5 +1,3 @@
-// Archivo: Project/src/pages/RegistroPage.tsx
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -10,56 +8,79 @@ function RegistroPage() {
   const navigate = useNavigate();
 
   // --- Estados para el Formulario ---
-  // (Un estado por cada campo)
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fechaNacimiento, setFechaNacimiento] = useState("");
+  const [fechaNacimiento, setFechaNacimiento] = useState(""); // Valor esperado: YYYY-MM-DD
 
   // Dirección de envío eliminada — solo guardamos datos básicos
   const [termsCheck, setTermsCheck] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
-  // --- Lógica de Desplegables (useEffect) ---
-
-  // No hay efectos relacionados a ubicación ahora
-
   // --- Lógica de Envío ---
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
 
-    // Validaciones de registro.js
+    // Validaciones de términos y condiciones
     if (!termsCheck) {
       setError("Debe aceptar los términos y condiciones.");
       return;
     }
 
-    // (Añadimos validación de campos vacíos)
-    if (!firstName || !lastName || !username || !email || !password) {
-      setError("Por favor, complete todos los campos obligatorios.");
+    // Validamos que todos los campos obligatorios del DTO del backend estén llenos.
+    // El backend espera: username, email, password, name, lastName, birthDate (en formato YYYY-MM-DD)
+    if (
+      !firstName ||
+      !lastName ||
+      !username ||
+      !email ||
+      !password ||
+      !fechaNacimiento
+    ) {
+      setError(
+        "Por favor, complete todos los campos obligatorios, incluyendo la fecha de nacimiento."
+      );
       return;
     }
 
     try {
-      // Llamamos a la función register del contexto
+      // ✅ CORRECCIÓN FINAL: Mapeamos a las claves en INGLÉS
+      // que el tipo 'RegisterRequest' (en AuthContext y authApi) espera.
       await register({
-        nombre: firstName,
-        apellido: lastName,
+        name: firstName, // Coincide con 'name' en RegisterRequest
+        lastname: lastName, // Coincide con 'lastname'
         username: username,
-        correo: email,
-        contrasena: password,
-        fechaNacimiento: fechaNacimiento || undefined,
-        // (La dirección y teléfono se guardarían en un perfil de usuario más complejo)
+        email: email, // Coincide con 'email'
+        contrasena: password, // Coincide con 'password'
+        fechaNacimiento: fechaNacimiento, // Coincide con 'birthDate'
       });
 
+      // Nota: Reemplazar 'alert' por un componente Modal en una aplicación de producción.
       alert("Usuario registrado correctamente");
       navigate("/login"); // Redirigir al login
     } catch (err: any) {
-      setError(err.message || "Error al registrar.");
+      // Si el error es del backend (HTTP 400), puede incluir detalles de validación.
+      // Aquí intentamos mostrar un mensaje más útil.
+      let errorMessage = "Error al registrar. Intente de nuevo.";
+
+      if (err.response && err.response.data && err.response.data.message) {
+        errorMessage = err.response.data.message;
+        // Si hay errores de validación específicos (como "Username ya está en uso"), los mostramos.
+        if (err.response.data.errors) {
+          const validationErrors = Object.values(err.response.data.errors).join(
+            "; "
+          );
+          errorMessage = `Errores de validación: ${validationErrors}`;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
     }
   };
 
@@ -142,6 +163,7 @@ function RegistroPage() {
                           type="date"
                           id="fechaNacimiento"
                           className="form-control"
+                          required
                           value={fechaNacimiento}
                           onChange={(e) => setFechaNacimiento(e.target.value)}
                         />
