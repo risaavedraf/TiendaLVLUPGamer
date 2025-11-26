@@ -23,7 +23,7 @@ function ProductosPage() {
   const [itemsPerPage, setItemsPerPage] = useState(6);
   const [sortBy, setSortBy] = useState<string>("default");
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Estados para datos del backend
   const [productos, setProductos] = useState<ProductoResponse[]>([]);
   const [categorias, setCategorias] = useState<CategoriaResponse[]>([]);
@@ -183,18 +183,16 @@ function ProductosPage() {
                   "✓"}
               </span>
               <i
-                className={`bi ${
-                  showFilters ? "bi-chevron-up" : "bi-chevron-down"
-                }`}
+                className={`bi ${showFilters ? "bi-chevron-up" : "bi-chevron-down"
+                  }`}
               ></i>
             </button>
           </div>
 
           {/* Sidebar de filtros - Solo visible cuando está expandido en móvil, siempre visible en desktop */}
           <div
-            className={`col-lg-3 mb-4 ${
-              showFilters ? "" : "d-none d-lg-block"
-            }`}
+            className={`col-lg-3 mb-4 ${showFilters ? "" : "d-none d-lg-block"
+              }`}
           >
             <div className="bg-white rounded-3 shadow-sm p-4">
               {/* Header de filtros con contador */}
@@ -237,11 +235,10 @@ function ProductosPage() {
                   {categories.map((category) => (
                     <div
                       key={category}
-                      className={`form-check p-2 rounded ${
-                        selectedCategory === category
-                          ? "bg-primary bg-opacity-10"
-                          : ""
-                      }`}
+                      className={`form-check p-2 rounded ${selectedCategory === category
+                        ? "bg-primary bg-opacity-10"
+                        : ""
+                        }`}
                     >
                       <input
                         className="form-check-input"
@@ -260,8 +257,8 @@ function ProductosPage() {
                           {category === "Todos"
                             ? productos.length
                             : productos.filter(
-                                (p) => p.categoria.nombre === category
-                              ).length}
+                              (p) => p.categoria.nombre === category
+                            ).length}
                         </span>
                       </label>
                     </div>
@@ -283,11 +280,10 @@ function ProductosPage() {
                   {priceRanges.map((range) => (
                     <div
                       key={range.label}
-                      className={`form-check p-2 rounded ${
-                        priceRange === range.label
-                          ? "bg-primary bg-opacity-10"
-                          : ""
-                      }`}
+                      className={`form-check p-2 rounded ${priceRange === range.label
+                        ? "bg-primary bg-opacity-10"
+                        : ""
+                        }`}
                     >
                       <input
                         className="form-check-input"
@@ -428,9 +424,8 @@ function ProductosPage() {
                           ).map((number) => (
                             <li
                               key={number}
-                              className={`page-item ${
-                                currentPage === number ? "active" : ""
-                              }`}
+                              className={`page-item ${currentPage === number ? "active" : ""
+                                }`}
                             >
                               <button
                                 className="page-link"

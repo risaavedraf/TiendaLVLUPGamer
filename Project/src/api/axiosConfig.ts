@@ -1,8 +1,12 @@
 // Archivo: Project/src/api/axiosConfig.ts
 import axios from 'axios';
 
-// URL base del backend - Cambiar según tu configuración
-const API_BASE_URL = 'http://localhost:8080/api';
+// URL base del backend
+// En desarrollo usamos el proxy ('/api')
+// En producción usamos la URL completa definida en .env
+const API_BASE_URL = import.meta.env.DEV
+  ? '/api'
+  : (import.meta.env.VITE_API_URL || 'http://localhost:8080') + '/api';
 
 // Crear instancia de Axios con configuración por defecto
 const axiosInstance = axios.create({
@@ -10,7 +14,7 @@ const axiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 segundos
+  timeout: 100000,
 });
 
 // Interceptor de PETICIONES: Agrega el token JWT automáticamente
@@ -18,11 +22,11 @@ axiosInstance.interceptors.request.use(
   (config) => {
     // Obtener el token del localStorage
     const token = localStorage.getItem('jwt_token');
-    
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return config;
   },
   (error) => {
@@ -38,7 +42,7 @@ axiosInstance.interceptors.response.use(
   },
   (error) => {
     // Manejo centralizado de errores
-    
+
     if (error.response) {
       // El servidor respondió con un código de error
       switch (error.response.status) {
@@ -50,33 +54,33 @@ axiosInstance.interceptors.response.use(
           // Redirigir al login (se puede mejorar con React Router)
           window.location.href = '/login';
           break;
-          
+
         case 403:
           // Prohibido - No tiene permisos
           console.error('No tienes permisos para realizar esta acción.');
           break;
-          
+
         case 404:
           // No encontrado
           console.error('Recurso no encontrado.');
           break;
-          
+
         case 500:
           // Error del servidor
           console.error('Error interno del servidor. Intenta más tarde.');
           break;
-          
+
         default:
           console.error('Error en la petición:', error.response.data);
       }
     } else if (error.request) {
       // La petición se hizo pero no hubo respuesta
-      console.error('No se pudo conectar con el servidor. Verifica tu conexión.');
+      console.error('No se pudo conectar con el servidor. Verifica tu conexión.', error.message);
     } else {
       // Algo más salió mal
       console.error('Error:', error.message);
     }
-    
+
     return Promise.reject(error);
   }
 );

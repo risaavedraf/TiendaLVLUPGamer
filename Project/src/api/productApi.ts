@@ -95,28 +95,28 @@ export const getProductoById = async (id: number): Promise<ProductoResponse> => 
 
 /**
  * CREAR PRODUCTO (Admin)
- * POST /api/productos
+ * POST /api/admin/productos
  */
 export const createProducto = async (producto: CreateProductoRequest): Promise<ProductoResponse> => {
-  const response = await axiosInstance.post<ProductoResponse>('/productos', producto);
+  const response = await axiosInstance.post<ProductoResponse>('/admin/productos', producto);
   return response.data;
 };
 
 /**
  * ACTUALIZAR PRODUCTO (Admin)
- * PUT /api/productos/{id}
+ * PUT /api/admin/productos/{id}
  */
 export const updateProducto = async (id: number, producto: UpdateProductoRequest): Promise<ProductoResponse> => {
-  const response = await axiosInstance.put<ProductoResponse>(`/productos/${id}`, producto);
+  const response = await axiosInstance.put<ProductoResponse>(`/admin/productos/${id}`, producto);
   return response.data;
 };
 
 /**
  * ELIMINAR PRODUCTO (Admin)
- * DELETE /api/productos/{id}
+ * DELETE /api/admin/productos/{id}
  */
 export const deleteProducto = async (id: number): Promise<void> => {
-  await axiosInstance.delete(`/productos/${id}`);
+  await axiosInstance.delete(`/admin/productos/${id}`);
 };
 
 /**

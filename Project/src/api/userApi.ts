@@ -46,8 +46,7 @@ export interface UpdateProfileRequest {
 }
 
 export interface AsignarRolRequest {
-  usuarioId: number;
-  rolNombre: string; // "ADMIN", "USUARIO", "VENDEDOR"
+  rolId: number;
 }
 
 // ============================================
@@ -65,53 +64,62 @@ export const getAllUsuarios = async (
 ): Promise<PageResponse<UsuarioResponse>> => {
   const params: any = { page, size };
   if (search) params.search = search;
-  
+
   const response = await axiosInstance.get<PageResponse<UsuarioResponse>>('/admin/usuarios', { params });
   return response.data;
 };
 
 /**
  * OBTENER USUARIO POR ID (Admin)
- * GET /api/usuarios/{id}
+ * GET /api/admin/usuarios/{id}
  */
 export const getUsuarioById = async (id: number): Promise<UsuarioResponse> => {
-  const response = await axiosInstance.get<UsuarioResponse>(`/usuarios/${id}`);
+  const response = await axiosInstance.get<UsuarioResponse>(`/admin/usuarios/${id}`);
   return response.data;
 };
 
 /**
  * ACTUALIZAR USUARIO (Admin)
- * PUT /api/usuarios/{id}
+ * PUT /api/admin/usuarios/{id}
  */
 export const updateUsuario = async (id: number, usuario: UpdateProfileRequest): Promise<UsuarioResponse> => {
-  const response = await axiosInstance.put<UsuarioResponse>(`/usuarios/${id}`, usuario);
+  const response = await axiosInstance.put<UsuarioResponse>(`/admin/usuarios/${id}`, usuario);
   return response.data;
 };
 
 /**
  * DESACTIVAR USUARIO (Admin)
- * PUT /api/usuarios/{id}/desactivar
+ * PUT /api/admin/usuarios/{id}/desactivar
  */
 export const desactivarUsuario = async (id: number): Promise<UsuarioResponse> => {
-  const response = await axiosInstance.put<UsuarioResponse>(`/usuarios/${id}/desactivar`);
+  const response = await axiosInstance.put<UsuarioResponse>(`/admin/usuarios/${id}/desactivar`);
   return response.data;
 };
 
 /**
  * ACTIVAR USUARIO (Admin)
- * PUT /api/usuarios/{id}/activar
+ * PUT /api/admin/usuarios/{id}/activar
  */
 export const activarUsuario = async (id: number): Promise<UsuarioResponse> => {
-  const response = await axiosInstance.put<UsuarioResponse>(`/usuarios/${id}/activar`);
+  const response = await axiosInstance.put<UsuarioResponse>(`/admin/usuarios/${id}/activar`);
   return response.data;
 };
 
 /**
  * ASIGNAR ROL A USUARIO (Admin)
- * POST /api/usuarios/asignar-rol
+ * POST /api/admin/usuarios/{id}/roles
  */
-export const asignarRol = async (request: AsignarRolRequest): Promise<UsuarioResponse> => {
-  const response = await axiosInstance.post<UsuarioResponse>('/usuarios/asignar-rol', request);
+export const asignarRol = async (userId: number, rolId: number): Promise<UsuarioResponse> => {
+  const response = await axiosInstance.post<UsuarioResponse>(`/admin/usuarios/${userId}/roles`, { rolId });
+  return response.data;
+};
+
+/**
+ * ELIMINAR ROL DE USUARIO (Admin)
+ * DELETE /api/admin/usuarios/{userId}/roles/{rolId}
+ */
+export const removeRolFromUser = async (userId: number, rolId: number): Promise<UsuarioResponse> => {
+  const response = await axiosInstance.delete<UsuarioResponse>(`/admin/usuarios/${userId}/roles/${rolId}`);
   return response.data;
 };
 
@@ -125,14 +133,31 @@ export const getRoles = async (): Promise<RolResponse[]> => {
 };
 
 /**
+ * CREAR ROL (Admin)
+ * POST /api/roles
+ */
+export const createRol = async (nombre: string): Promise<RolResponse> => {
+  const response = await axiosInstance.post<RolResponse>('/roles', { nombre });
+  return response.data;
+};
+
+/**
+ * ELIMINAR ROL (Admin)
+ * DELETE /api/roles/{id}
+ */
+export const deleteRol = async (id: number): Promise<void> => {
+  await axiosInstance.delete(`/roles/${id}`);
+};
+
+/**
  * OBTENER ESTADÍSTICAS DE USUARIOS (Admin)
- * GET /api/usuarios/estadisticas
+ * GET /api/admin/usuarios/estadisticas
  */
 export const getUsuariosEstadisticas = async (): Promise<{
   totalUsuarios: number;
   usuariosActivos: number;
   nuevosMesActual: number;
 }> => {
-  const response = await axiosInstance.get('/usuarios/estadisticas');
+  const response = await axiosInstance.get('/admin/usuarios/estadisticas');
   return response.data;
 };

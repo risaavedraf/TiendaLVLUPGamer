@@ -1,3 +1,4 @@
+import { getProductImage } from "../utils/imageUtils";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { ProductoResponse } from "../api/productApi";
@@ -114,9 +115,9 @@ export default function CategoryCarousel({
   const { currentUser } = useAuth();
   const discountPercent =
     currentUser &&
-    currentUser.email &&
-    (currentUser.email.endsWith("@duocuc.cl") ||
-      currentUser.email.endsWith("@profesor.duoc.cl"))
+      currentUser.email &&
+      (currentUser.email.endsWith("@duocuc.cl") ||
+        currentUser.email.endsWith("@profesor.duoc.cl"))
       ? 0.1
       : 0;
 
@@ -172,7 +173,7 @@ export default function CategoryCarousel({
                 className="text-decoration-none text-reset d-block h-100"
               >
                 <img
-                  src={p.imagenes && p.imagenes.length > 0 ? p.imagenes[0].url : "/Img/elementor-placeholder-image.png"}
+                  src={getProductImage(p)}
                   className="card-img-top"
                   alt={p.nombre}
                   style={{ height: 140, objectFit: "contain", padding: "1rem" }}

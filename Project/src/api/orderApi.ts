@@ -108,7 +108,7 @@ export const cancelarPedido = async (id: number): Promise<PedidoResponse> => {
 
 /**
  * OBTENER TODOS LOS PEDIDOS (Admin)
- * GET /api/pedidos
+ * GET /api/admin/pedidos
  */
 export const getAllPedidos = async (
   page: number = 0,
@@ -118,16 +118,16 @@ export const getAllPedidos = async (
   const params: any = { page, size };
   if (estado) params.estado = estado;
   
-  const response = await axiosInstance.get<PageResponse<PedidoResponse>>('/pedidos', { params });
+  const response = await axiosInstance.get<PageResponse<PedidoResponse>>('/admin/pedidos', { params });
   return response.data;
 };
 
 /**
  * ACTUALIZAR ESTADO DEL PEDIDO (Admin)
- * PUT /api/pedidos/{id}/estado
+ * PUT /api/admin/pedidos/{id}/estado
  */
 export const updatePedidoEstado = async (id: number, estado: UpdatePedidoEstadoRequest): Promise<PedidoResponse> => {
-  const response = await axiosInstance.put<PedidoResponse>(`/pedidos/${id}/estado`, estado);
+  const response = await axiosInstance.put<PedidoResponse>(`/admin/pedidos/${id}/estado`, estado);
   return response.data;
 };
 

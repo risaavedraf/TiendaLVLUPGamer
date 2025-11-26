@@ -1,6 +1,4 @@
-// Archivo: Project/src/components/ProductCard.tsx
-// (Versión final y corregida)
-
+import { getProductImage } from "../utils/imageUtils";
 import type { ProductoResponse } from "../api/productApi";
 import { Link } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
@@ -34,15 +32,15 @@ function ProductCard({ producto }: ProductCardProps) {
     descripcion: producto.descripcion,
     precio: producto.precio,
     stock: producto.stock,
-    img: producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[0].url : "/Img/elementor-placeholder-image.png",
+    img: getProductImage(producto),
     categoria: producto.categoria,
   };
 
   const discountPercent =
     currentUser &&
-    currentUser.email &&
-    (currentUser.email.endsWith("@duocuc.cl") ||
-      currentUser.email.endsWith("@profesor.duoc.cl"))
+      currentUser.email &&
+      (currentUser.email.endsWith("@duocuc.cl") ||
+        currentUser.email.endsWith("@profesor.duoc.cl"))
       ? 0.1
       : 0;
   const discountedPrice = producto.precio * (1 - discountPercent);
@@ -77,7 +75,7 @@ function ProductCard({ producto }: ProductCardProps) {
       <div className="card h-100 shadow-sm border-0 product-card">
         <Link to={`/producto/${producto.id}`} className="text-decoration-none">
           <img
-            src={producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[0].url : "/Img/elementor-placeholder-image.png"}
+            src={getProductImage(producto)}
             className="card-img-top"
             alt={producto.nombre}
             loading="lazy"
@@ -142,7 +140,7 @@ function ProductCard({ producto }: ProductCardProps) {
                 )}
               </div>
             </div>
-            
+
             {/* Mostrar stock disponible */}
             <div className="mb-2">
               {producto.stock > 0 ? (
@@ -157,7 +155,7 @@ function ProductCard({ producto }: ProductCardProps) {
                 </small>
               )}
             </div>
-            
+
             {/* Badge de stock (si corresponde) */}
             <div className="mb-2">{renderStockBadge(producto.stock)}</div>
 
