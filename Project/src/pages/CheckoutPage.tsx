@@ -3,8 +3,20 @@ import { regionesYComunas } from "../data/locations";
 import { useCart } from "../contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import type { Address, Card } from "../data/checkout";
-import { loadSavedAddresses, saveAddresses, loadSavedCards, saveCards, processPayment } from "../data/checkout";
+import * as orderApi from "../api/orderApi";
+import type { DireccionRequest } from "../api/orderApi";
+import type { Address } from "../data/checkout";
+import { loadSavedAddresses, saveAddresses } from "../data/checkout";
+
+// Helper para formatear precios en CLP
+const formatCLP = (precio: number) => {
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(precio);
+};
 
 function CheckoutPage() {
   const { getCartDetails, clearCart } = useCart();
@@ -16,7 +28,6 @@ function CheckoutPage() {
   const userKey = currentUser ? `user_${currentUser.id}` : "guest";
 
   const [addresses, setAddresses] = useState<Address[]>(() => loadSavedAddresses(userKey));
-  const [cards, setCards] = useState<Card[]>(() => loadSavedCards(userKey));
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(addresses[0]?.id ?? null);
 
   // New address form state
@@ -33,28 +44,40 @@ function CheckoutPage() {
 
   const [availableComunas, setAvailableComunas] = useState<string[]>([]);
 
+  // Cargar direcciones del backend si el usuario está logueado
   useEffect(() => {
-    if (newAddr.region) {
-      const r = regionesYComunas.find((x) => x.region === newAddr.region);
-      setAvailableComunas(r ? r.comunas.map((c) => c.nombre) : []);
-    } else setAvailableComunas([]);
-  }, [newAddr.region]);
+    if (currentUser) {
+      orderApi.getMisDirecciones()
+        .then(apiAddresses => {
+          // Mapear direcciones del backend al formato Address local si es necesario
+          // Asumimos que la respuesta del backend es compatible o la adaptamos
+          const mappedAddresses: Address[] = apiAddresses.map(addr => ({
+            id: String(addr.id),
+            nombre: currentUser.nombre || "", // El backend no devuelve nombre/apellido en la dirección, usamos el del usuario
+            apellido: currentUser.apellido || "",
+            correo: currentUser.email || "",
+            calle: addr.calle,
+            depto: addr.numero, // Mapeamos numero a depto o viceversa según convención
+            region: addr.region,
+            comuna: addr.comuna,
+            instrucciones: addr.indicaciones
+          }));
+          setAddresses(mappedAddresses);
+          if (mappedAddresses.length > 0 && !selectedAddressId) {
+            setSelectedAddressId(mappedAddresses[0].id);
+          }
+        })
+        .catch(err => console.error("Error al cargar direcciones:", err));
+    } else {
+      // Si es guest, cargar de localStorage (aunque el usuario dijo que no se usa card, direcciones guest podrían ser útiles)
+      setAddresses(loadSavedAddresses(userKey));
+    }
+  }, [currentUser, userKey]);
 
-  function updateAddresses(list: Address[]) {
-    setAddresses(list);
-    saveAddresses(list, userKey);
-  }
-
-  function updateCards(list: Card[]) {
-    setCards(list);
-    saveCards(list, userKey);
-  }
-
-  const handleAddAddress = () => {
+  const handleAddAddress = async () => {
     // Primero validamos que todos los campos requeridos estén completos
-    if (!newAddr.nombre || !newAddr.apellido || !newAddr.correo || 
-        !newAddr.calle || !newAddr.region || !newAddr.comuna) {
-      alert("Por favor completa todos los campos obligatorios");
+    if (!newAddr.calle || !newAddr.region || !newAddr.comuna) {
+      alert("Por favor completa todos los campos obligatorios de la dirección");
       return;
     }
 
@@ -66,131 +89,136 @@ function CheckoutPage() {
         "• Podrás usarlos en futuras compras\n\n" +
         "¿Deseas iniciar sesión ahora?"
       );
-      
+
       if (response) {
-        // Guardamos la dirección actual en sessionStorage para recuperarla después del login
         sessionStorage.setItem('pendingAddress', JSON.stringify(newAddr));
         navigate("/login");
       }
       return;
     }
 
-    const id = String(Date.now());
-    const a: Address = {
-      id,
-      nombre: newAddr.nombre || "",
-      apellido: newAddr.apellido || "",
-      correo: newAddr.correo || "",
-      calle: newAddr.calle || "",
-      depto: newAddr.depto || "",
-      region: newAddr.region || "",
-      comuna: newAddr.comuna || "",
-      instrucciones: newAddr.instrucciones || "",
-    };
-    
-    const next = [a, ...addresses];
-    updateAddresses(next);
-    setSelectedAddressId(a.id);
-    
-    // Mostramos mensaje de éxito
-    alert("¡Dirección guardada exitosamente!");
-    
-    // Limpiamos el formulario manteniendo los datos del usuario
-    setNewAddr({
-      nombre: currentUser?.nombre || "",
-      apellido: currentUser?.apellido || "",
-      correo: currentUser?.email || "",
-      calle: "",
-      depto: "",
-      region: "",
-      comuna: "",
-      instrucciones: "",
-    });
+    try {
+      // Guardar en el backend
+      const nuevaDireccionReq: DireccionRequest = {
+        calle: newAddr.calle,
+        numero: newAddr.depto || "S/N",
+        comuna: newAddr.comuna,
+        ciudad: newAddr.comuna,
+        region: newAddr.region,
+        indicaciones: newAddr.instrucciones,
+      };
+
+      const savedAddress = await orderApi.createDireccion(nuevaDireccionReq);
+
+      const newAddressLocal: Address = {
+        id: String(savedAddress.id),
+        nombre: currentUser.nombre || "",
+        apellido: currentUser.apellido || "",
+        correo: currentUser.email || "",
+        calle: savedAddress.calle,
+        depto: savedAddress.numero,
+        region: savedAddress.region,
+        comuna: savedAddress.comuna,
+        instrucciones: savedAddress.indicaciones
+      };
+
+      const next = [newAddressLocal, ...addresses];
+      setAddresses(next);
+      setSelectedAddressId(newAddressLocal.id);
+
+      // Mostramos mensaje de éxito
+      alert("¡Dirección guardada exitosamente!");
+
+      // Limpiamos el formulario
+      setNewAddr({
+        nombre: currentUser?.nombre || "",
+        apellido: currentUser?.apellido || "",
+        correo: currentUser?.email || "",
+        calle: "",
+        depto: "",
+        region: "",
+        comuna: "",
+        instrucciones: "",
+      });
+    } catch (error) {
+      console.error("Error al guardar dirección:", error);
+      alert("Error al guardar la dirección. Inténtalo nuevamente.");
+    }
   };
 
-  // Simple card save (not secure, for demo only)
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardName, setCardName] = useState(currentUser?.nombre || "");
-  const [cardExpiry, setCardExpiry] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success" | "failure">("idle");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
-  const handleSaveCard = () => {
+  const handlePay = async () => {
+    // 1. Validar autenticación (Requisito del backend)
     if (!currentUser) {
-      if (
-        confirm(
-          "Debes iniciar sesión para guardar una tarjeta. ¿Ir a iniciar sesión?"
-        )
-      ) {
-        navigate("/login");
-      }
+      alert("Debes iniciar sesión para realizar un pedido.");
+      navigate("/login");
       return;
     }
-    const clean = cardNumber.replace(/\s+/g, "");
-    const last4 = clean.slice(-4);
-    const id = String(Date.now());
-    const c: Card = { id, cardholder: cardName, last4, expiry: cardExpiry };
-    const next = [c, ...cards];
-    updateCards(next);
-    setCardNumber("");
-    setCardExpiry("");
-  };
 
-  const handlePay = () => {
-    // Validar dirección: debe tener una seleccionada o todos los campos del formulario nuevo
+    // 2. Validar selección de dirección
     const hasSelectedAddress = selectedAddressId && addresses.find(a => a.id === selectedAddressId);
-    const hasNewAddress = newAddr.nombre && newAddr.apellido && newAddr.correo && 
-                         newAddr.calle && newAddr.region && newAddr.comuna;
-    
+    const hasNewAddress = newAddr.nombre && newAddr.apellido && newAddr.correo &&
+      newAddr.calle && newAddr.region && newAddr.comuna;
+
     if (!hasSelectedAddress && !hasNewAddress) {
       alert("Debes seleccionar una dirección guardada o completar todos los campos de la nueva dirección");
       return;
     }
 
-    // Validar tarjeta: debe tener una guardada o los campos del formulario completos
-    const hasValidCard = cards.length > 0 || (cardNumber && cardName && cardExpiry);
-    if (!hasValidCard) {
-      alert("Debes seleccionar una tarjeta guardada o completar los datos de la nueva tarjeta");
-      return;
-    }
+    try {
+      setPaymentStatus("processing");
 
-    // Usar la dirección seleccionada o los datos del formulario (sin guardar de nuevo)
-    let addr;
-    if (hasSelectedAddress) {
-      addr = addresses.find((a) => a.id === selectedAddressId)!;
-    } else {
-      // Usar los datos del formulario directamente sin guardar
-      addr = {
-        id: String(Date.now()),
-        nombre: newAddr.nombre || "",
-        apellido: newAddr.apellido || "",
-        correo: newAddr.correo || "",
-        calle: newAddr.calle || "",
-        depto: newAddr.depto || "",
-        region: newAddr.region || "",
-        comuna: newAddr.comuna || "",
-        instrucciones: newAddr.instrucciones || "",
-      };
-    }
+      let finalAddressId: number;
 
-    // Empezar procesamiento visual
-    setPaymentStatus("processing");
+      // 4. Obtener ID de dirección
+      if (hasSelectedAddress) {
+        // Usar dirección existente
+        finalAddressId = Number(selectedAddressId);
+      } else {
+        // Crear nueva dirección primero
+        const nuevaDireccionReq: DireccionRequest = {
+          calle: newAddr.calle || "",
+          numero: newAddr.depto || "S/N",
+          comuna: newAddr.comuna || "",
+          ciudad: newAddr.comuna || "", // Asumimos ciudad = comuna por simplicidad
+          region: newAddr.region || "",
+          indicaciones: newAddr.instrucciones,
+        };
 
-    // Procesar el pago
-    processPayment(cart, currentUser ? {
-      id: currentUser.id,
-      nombre: currentUser.nombre || '',
-      apellido: currentUser.apellido || '',
-      email: currentUser.email || ''
-    } : null, addr).then(({ success, orderId }) => {
-      setOrderNumber(String(orderId));
-      setPaymentStatus(success ? "success" : "failure");
-      
-      if (success) {
-        // Limpiar carrito pero mantener confirmación en página
-        clearCart();
+        const savedAddress = await orderApi.createDireccion(nuevaDireccionReq);
+        finalAddressId = savedAddress.id;
+
+        // Actualizar lista local
+        const newAddressList = [savedAddress, ...addresses];
+        // @ts-ignore
+        updateAddresses(newAddressList);
+        setSelectedAddressId(String(savedAddress.id));
       }
-    });
+
+      // 5. Realizar Checkout con el ID de la dirección
+      const payload = {
+        items: cart.map(item => ({
+          productId: item.productId,
+          quantity: item.cantidad,
+        })),
+        direccionId: finalAddressId,
+      };
+
+      const pedido = await orderApi.createPedido(payload);
+
+      setOrderNumber(String(pedido.id));
+      setPaymentStatus("success");
+      clearCart();
+
+      alert(`¡Pedido realizado con éxito! Número de pedido: ${pedido.numeroPedido}`);
+    } catch (error: any) {
+      console.error('Error al procesar pago:', error);
+      setPaymentStatus("failure");
+      const msg = error.response?.data?.mensaje || error.response?.data?.message || 'Error al procesar el pago';
+      alert(`Error: ${msg}`);
+    }
   };
 
   return (
@@ -221,8 +249,8 @@ function CheckoutPage() {
           <div>
             <strong>Compra como invitado</strong>
             <p className="mb-0 mt-1">
-              Para guardar direcciones y tarjetas para futuras compras, necesitas{" "}
-              <a href="/login" className="alert-link">iniciar sesión</a>. 
+              Para guardar direcciones para futuras compras, necesitas{" "}
+              <a href="/login" className="alert-link">iniciar sesión</a>.
               Aún puedes realizar tu compra como invitado, pero tus datos no se guardarán.
             </p>
           </div>
@@ -409,105 +437,17 @@ function CheckoutPage() {
             </div>
           </div>
 
-          
-
-          <hr className="my-4" />
-
-          <h5>Información de Pago</h5>
-          {cards.length > 0 && (
-            <div className="mb-4">
-              <h6 className="mb-3">Tarjetas guardadas</h6>
-              {cards.map((c) => (
-                <div key={c.id} className="form-check mb-2">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="card"
-                    id={`card-${c.id}`}
-                  />
-                  <label className="form-check-label" htmlFor={`card-${c.id}`}>
-                    <i className="bi bi-credit-card me-2"></i>
-                    Tarjeta terminada en {c.last4} (exp {c.expiry})
-                  </label>
-                </div>
-              ))}
-              <div className="border-bottom my-3"></div>
-            </div>
-          )}
-
-          <h6 className="mb-3">Nueva tarjeta</h6>
-          <div className="row g-3">
-            <div className="col-md-6">
-              <div className="form-floating">
-                <input
-                  type="text"
-                  className="form-control"
-                  id="cardNameInput"
-                  placeholder=" "
-                  value={cardName}
-                  onChange={(e) => setCardName(e.target.value)}
-                  required
-                />
-                <label htmlFor="cardNameInput">Nombre en la tarjeta *</label>
-              </div>
-            </div>
-            <div className="col-md-6">
-              <div className="form-floating">
-                <input
-                  type="text"
-                  className="form-control"
-                  id="cardNumberInput"
-                  placeholder=" "
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value)}
-                  pattern="[0-9]{16}"
-                  maxLength={16}
-                  required
-                />
-                <label htmlFor="cardNumberInput">Número de tarjeta *</label>
-              </div>
-              <div className="form-text">16 dígitos sin espacios</div>
-            </div>
-            <div className="col-md-6">
-              <div className="form-floating">
-                <input
-                  type="text"
-                  className="form-control"
-                  id="cardExpiryInput"
-                  placeholder=" "
-                  value={cardExpiry}
-                  onChange={(e) => setCardExpiry(e.target.value)}
-                  pattern="(0[1-9]|1[0-2])\/([0-9]{2})"
-                  maxLength={5}
-                  required
-                />
-                <label htmlFor="cardExpiryInput">Fecha de expiración (MM/AA) *</label>
-              </div>
-            </div>
-            <div className="col-md-6 d-flex align-items-center justify-content-end">
-              <button
-                className="btn btn-outline-primary w-100"
-                onClick={handleSaveCard}
-                disabled={!currentUser}
-              >
-                <i className="bi bi-save me-2"></i>
-                Guardar tarjeta
-              </button>
-            </div>
-          </div>
-          
         </div>
-        
 
         <div className="col-md-5">
           <div className="card border-0 bg-light">
             <div className="card-body">
               <h5 className="card-title mb-4">Resumen ({cart.length} {cart.length === 1 ? 'producto' : 'productos'})</h5>
-              
+
               <div className="border-bottom pb-3">
                 <div className="d-flex justify-content-between mb-2">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>{formatCLP(subtotal)}</span>
                 </div>
                 <div className="d-flex justify-content-between mb-2">
                   <span>Envío</span>
@@ -515,36 +455,35 @@ function CheckoutPage() {
                 </div>
                 <div className="d-flex justify-content-between mb-2">
                   <span>IVA incluido</span>
-                  <span>${(subtotal * 0.19).toFixed(2)}</span>
+                  <span>{formatCLP(subtotal * 0.19)}</span>
                 </div>
               </div>
 
               <div className="d-flex justify-content-between align-items-center py-3">
                 <span className="h5 mb-0">TOTAL</span>
-                <span className="h5 mb-0">${subtotal.toFixed(2)}</span>
+                <span className="h5 mb-0">{formatCLP(subtotal)}</span>
               </div>
 
               <div className="mt-4">
                 <button
-                  className={`btn w-100 ${
-                    paymentStatus === 'failure'
-                      ? 'btn-warning'
-                      : paymentStatus === 'success'
+                  className={`btn w-100 ${paymentStatus === 'failure'
+                    ? 'btn-warning'
+                    : paymentStatus === 'success'
                       ? 'btn-secondary'
                       : 'btn-primary'
-                  } btn-lg mb-3`}
+                    } btn-lg mb-3`}
                   onClick={handlePay}
                   disabled={paymentStatus === 'processing' || paymentStatus === 'success'}
                 >
                   {paymentStatus === 'processing'
                     ? <><i className="bi bi-hourglass-split me-2"></i>Procesando...</>
                     : paymentStatus === 'failure'
-                    ? <><i className="bi bi-arrow-repeat me-2"></i>Volver a realizar el pago</>
-                    : paymentStatus === 'success'
-                    ? <><i className="bi bi-check-circle me-2"></i>Pago realizado</>
-                    : 'Iniciar pago'}
+                      ? <><i className="bi bi-arrow-repeat me-2"></i>Volver a realizar el pago</>
+                      : paymentStatus === 'success'
+                        ? <><i className="bi bi-check-circle me-2"></i>Pago realizado</>
+                        : 'Iniciar pago'}
                 </button>
-                
+
                 <div className="d-grid gap-2">
                   <button
                     className="btn btn-outline-secondary"
@@ -556,7 +495,6 @@ function CheckoutPage() {
                 </div>
               </div>
 
-              
             </div>
           </div>
         </div>
@@ -591,8 +529,8 @@ function CheckoutPage() {
                       </td>
                       <td>{it.nombre}</td>
                       <td>{it.cantidad}</td>
-                      <td>${it.precio.toFixed(2)}</td>
-                      <td>${(it.precio * it.cantidad).toFixed(2)}</td>
+                      <td>{formatCLP(it.precio)}</td>
+                      <td>{formatCLP(it.precio * it.cantidad)}</td>
                     </tr>
                   ))
                 )}
@@ -601,7 +539,7 @@ function CheckoutPage() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 

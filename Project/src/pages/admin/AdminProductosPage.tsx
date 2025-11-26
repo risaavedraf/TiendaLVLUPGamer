@@ -1,20 +1,48 @@
 // Archivo: Project/src/pages/admin/AdminProductosPage.tsx
 
-import { useState } from "react";
-import { productosArray as initialProducts } from "../../data/products";
-import type { Product } from "../../data/products"; // Datos iniciales y tipo
-import Modal from "../../component/Model"; // Nuestro Modal genérico
-// renderStockBadge se usa en la UI pública; aquí mostramos el número para administración
+import { useState, useEffect } from "react";
+import * as productApi from "../../api/productApi";
+import type { ProductoResponse } from "../../api/productApi";
+import Modal from "../../component/Model";
+
+// Helper para formatear precios en CLP
+const formatCLP = (precio: number) => {
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(precio);
+};
 
 function AdminProductosPage() {
   // 1. Estado para la lista de productos
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<ProductoResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // 2. Estados para modo eliminar y modal
   const [deleteMode, setDeleteMode] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProductToEdit, setCurrentProductToEdit] =
-    useState<Product | null>(null); // Para editar
+    useState<ProductoResponse | null>(null);
+
+  // Cargar productos al montar
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      setIsLoading(true);
+      const data = await productApi.getProductos(0, 100);
+      setProducts(data.content);
+    } catch (error) {
+      console.error('Error al cargar productos:', error);
+      alert('Error al cargar productos');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // --- Funciones de Gestión ---
 
@@ -22,12 +50,18 @@ function AdminProductosPage() {
     setDeleteMode(!deleteMode);
   };
 
-  const deleteProduct = (id: number) => {
+  const deleteProduct = async (id: number) => {
     if (window.confirm(`¿Estás seguro de eliminar el producto con ID ${id}?`)) {
-      setProducts((currentProducts) =>
-        currentProducts.filter((p) => p.id !== id)
-      );
-      // Llamada a API aquí en un caso real
+      try {
+        await productApi.deleteProducto(id);
+        setProducts((currentProducts) =>
+          currentProducts.filter((p) => p.id !== id)
+        );
+        alert('Producto eliminado correctamente');
+      } catch (error) {
+        console.error('Error al eliminar producto:', error);
+        alert('Error al eliminar producto');
+      }
     }
   };
 
@@ -37,77 +71,52 @@ function AdminProductosPage() {
   };
 
   // 3. Función para guardar un producto desde el Modal
-  const handleSaveProduct = (productData: Partial<Product>) => {
-    // Resolver categoría: si el modal envía 'categoria' lo usamos; si envía 'categoriaId' buscamos el objeto
-    const categoriaResolved = (productData as any).categoria ||
-      (typeof (productData as any).categoriaId !== "undefined"
-        ? initialProducts.find(
-            (p) => p.categoria.id === Number((productData as any).categoriaId)
-          )?.categoria
-        : undefined) || { id: 99, nombre: "Sin Categoría" };
-
-    // Si productData tiene id, estamos editando
-    if (
-      typeof (productData as any).id !== "undefined" &&
-      (productData as any).id !== null
-    ) {
-      const id = Number((productData as any).id);
-      setProducts((currentProducts) =>
-        currentProducts.map((p) => {
-          if (p.id === id) {
-            const updated: Product = {
-              ...p,
-              nombre: productData.nombre ?? p.nombre,
-              descripcion: productData.descripcion ?? p.descripcion,
-              categoria: categoriaResolved ?? p.categoria,
-              precio:
-                typeof productData.precio !== "undefined"
-                  ? Number(productData.precio)
-                  : p.precio,
-              stock:
-                typeof productData.stock !== "undefined"
-                  ? Number(productData.stock)
-                  : p.stock,
-              img: productData.img ?? p.img,
-            };
-            // También actualizar el array global initialProducts
-            try {
-              const idx = initialProducts.findIndex((ip) => ip.id === id);
-              if (idx >= 0) initialProducts[idx] = updated;
-            } catch (e) {
-              console.warn(
-                "No se pudo actualizar el array global de productos",
-                e
-              );
-            }
-            return updated;
-          }
-          return p;
-        })
-      );
-
-      return;
-    }
-
-    // Si no tiene id, añadimos como nuevo producto
-    const newProduct: Product = {
-      id: Math.max(0, ...products.map((p) => p.id)) + 1, // Nuevo ID simple
-      nombre: productData.nombre || "Nombre no definido",
-      descripcion: productData.descripcion || "Sin descripción",
-      categoria: categoriaResolved,
-      precio: Number(productData.precio) || 0,
-      stock: Number(productData.stock) || 0,
-      img: productData.img || "/Img/placeholder.png",
-    };
-    setProducts((currentProducts) => [...currentProducts, newProduct]);
+  const handleSaveProduct = async (productData: Partial<ProductoResponse>) => {
     try {
-      initialProducts.push(newProduct);
-    } catch (e) {
-      console.warn("No se pudo añadir al array global de productos", e);
+      // Si productData tiene id, estamos editando
+      if (typeof (productData as any).id !== "undefined" && (productData as any).id !== null) {
+        const id = Number((productData as any).id);
+        const updated = await productApi.updateProducto(id, {
+          nombre: productData.nombre,
+          descripcion: productData.descripcion,
+          precio: productData.precio,
+          stock: productData.stock,
+          categoriaId: productData.categoria?.id,
+          activo: true,
+        });
+        setProducts((currentProducts) =>
+          currentProducts.map((p) => (p.id === id ? updated : p))
+        );
+        alert('Producto actualizado correctamente');
+      } else {
+        // Crear nuevo producto
+        const nuevo = await productApi.createProducto({
+          nombre: productData.nombre || "Nombre no definido",
+          descripcion: productData.descripcion || "Sin descripción",
+          precio: Number(productData.precio) || 0,
+          stock: Number(productData.stock) || 0,
+          categoriaId: productData.categoria?.id || 1,
+        });
+        setProducts((currentProducts) => [...currentProducts, nuevo]);
+        alert('Producto creado correctamente');
+      }
+    } catch (error: any) {
+      console.error('Error al guardar producto:', error);
+      alert(error.response?.data?.mensaje || 'Error al guardar producto');
     }
   };
 
   // --- Renderizado ---
+  if (isLoading) {
+    return (
+      <div className="text-center py-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div id="products" className="section">
       {" "}
@@ -150,7 +159,7 @@ function AdminProductosPage() {
                   {product.descripcion.substring(0, 50)}
                   {product.descripcion.length > 50 ? "..." : ""}
                 </td>
-                <td>${product.precio.toFixed(2)}</td>
+                <td>{formatCLP(product.precio)}</td>
                 <td>
                   {product.stock || 0}
                   {product.stock === 0 && (

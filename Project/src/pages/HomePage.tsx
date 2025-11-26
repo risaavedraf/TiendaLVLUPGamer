@@ -1,12 +1,41 @@
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import ProductList from "../component/ProductList";
 import CategoryCarousel from "../component/CategoryCarousel";
-import { productosArray } from "../data/products";
+import * as productApi from "../api/productApi";
+import type { ProductoResponse } from "../api/productApi";
 import { ordersArray } from "../data/orders";
 import { getAverageRating } from "../utils/reviews";
-// 3. Importar la clase Toast de Bootstrap
 
 function HomePage() {
+  const [productos, setProductos] = useState<ProductoResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProductos = async () => {
+      try {
+        setIsLoading(true);
+        const data = await productApi.getProductos(0, 50);
+        setProductos(data.content);
+      } catch (error) {
+        console.error('Error al cargar productos:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadProductos();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="container py-5 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="container col-xxl-8 px-4 py-5">
@@ -50,7 +79,7 @@ function HomePage() {
           {/* Carousel: Más valorados */}
           <CategoryCarousel
             title="Más valorados"
-            products={productosArray
+            products={productos
               .slice()
               .sort(
                 (a, b) =>
@@ -75,7 +104,7 @@ function HomePage() {
                 }
               }
               // map products to their sold count (0 por defecto)
-              return productosArray
+              return productos
                 .slice()
                 .sort(
                   (a, b) =>
@@ -89,7 +118,7 @@ function HomePage() {
           {/* Carousel: Últimas unidades (stock >0 y <5) */}
           <CategoryCarousel
             title="Últimas unidades"
-            products={productosArray
+            products={productos
               .slice()
               .filter(
                 (p) => typeof p.stock === "number" && p.stock > 0 && p.stock < 5

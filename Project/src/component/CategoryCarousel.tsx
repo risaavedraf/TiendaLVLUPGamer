@@ -1,12 +1,23 @@
+import { getProductImage } from "../utils/imageUtils";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import type { Product } from "../data/products";
+import type { ProductoResponse } from "../api/productApi";
 import { getAverageRating } from "../utils/reviews";
 import { useAuth } from "../contexts/AuthContext";
 
+// Helper para formatear precios en CLP
+const formatCLP = (precio: number) => {
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(precio);
+};
+
 type Props = {
   title: string;
-  products: Product[];
+  products: ProductoResponse[];
   limit?: number; // how many products to consider from the list
   visible?: number; // how many items to show at once
 };
@@ -104,9 +115,9 @@ export default function CategoryCarousel({
   const { currentUser } = useAuth();
   const discountPercent =
     currentUser &&
-    currentUser.email &&
-    (currentUser.email.endsWith("@duocuc.cl") ||
-      currentUser.email.endsWith("@profesor.duoc.cl"))
+      currentUser.email &&
+      (currentUser.email.endsWith("@duocuc.cl") ||
+        currentUser.email.endsWith("@profesor.duoc.cl"))
       ? 0.1
       : 0;
 
@@ -162,7 +173,7 @@ export default function CategoryCarousel({
                 className="text-decoration-none text-reset d-block h-100"
               >
                 <img
-                  src={p.img}
+                  src={getProductImage(p)}
                   className="card-img-top"
                   alt={p.nombre}
                   style={{ height: 140, objectFit: "contain", padding: "1rem" }}
@@ -189,14 +200,14 @@ export default function CategoryCarousel({
                               marginRight: 6,
                             }}
                           >
-                            ${p.precio.toFixed(2)}
+                            {formatCLP(p.precio)}
                           </span>
                           <span>
-                            ${(p.precio * (1 - discountPercent)).toFixed(2)}
+                            {formatCLP(p.precio * (1 - discountPercent))}
                           </span>
                         </>
                       ) : (
-                        <>${p.precio.toFixed(2)}</>
+                        <>{formatCLP(p.precio)}</>
                       )}
                     </div>
                     <div className="small text-muted">

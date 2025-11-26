@@ -1,10 +1,20 @@
 // Archivo: Project/src/pages/CarritoPage.tsx
-// (Versión corregida del error de tipos)
 
 import { useState } from "react";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { fixImageUrl } from "../utils/imageUtils"; // Importar utilidad
+
+// Helper para formatear precios en CLP
+const formatCLP = (precio: number) => {
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(precio);
+};
 
 // 1. Definimos el tipo para el VALOR del objeto de códigos
 type DescuentoInfo = {
@@ -13,8 +23,6 @@ type DescuentoInfo = {
 };
 
 // 2. Definimos el tipo para el OBJETO de códigos
-// Le dice a TypeScript: "Es un objeto donde las claves son strings
-// y los valores son del tipo DescuentoInfo"
 type CodigosDescuento = {
   [key: string]: DescuentoInfo;
 };
@@ -41,9 +49,9 @@ function CarritoPage() {
   const { currentUser } = useAuth();
   const discountPercent =
     currentUser &&
-    currentUser.email &&
-    (currentUser.email.endsWith("@duocuc.cl") ||
-      currentUser.email.endsWith("@profesor.duoc.cl"))
+      currentUser.email &&
+      (currentUser.email.endsWith("@duocuc.cl") ||
+        currentUser.email.endsWith("@profesor.duoc.cl"))
       ? 0.1
       : 0;
 
@@ -67,12 +75,9 @@ function CarritoPage() {
   const totalFinal = subtotal - montoDescuento;
 
   const handleApplyDiscount = () => {
-    const codigoKey = inputCode.trim().toUpperCase(); // No necesitamos 'as keyof...'
+    const codigoKey = inputCode.trim().toUpperCase();
 
-    // 5. TypeScript ahora sabe que codigosDescuento[codigoKey] es DescuentoInfo
     if (codigosDescuento[codigoKey]) {
-      // 6. ¡Esta línea ahora es válida!
-      // TypeScript sabe que codigosDescuento[codigoKey].tipo es 'porcentaje' | 'fijo'
       setAppliedDiscount({
         codigo: codigoKey,
         ...codigosDescuento[codigoKey],
@@ -102,83 +107,85 @@ function CarritoPage() {
             <div className="alert alert-info">El carrito está vacío.</div>
           ) : (
             <div id="carrito-contenedor">
-              {cartDetails.map((item) => (
-                <div key={item.id} className="card mb-3 shadow-sm">
-                  {/* ... (el JSX interno de la tarjeta del carrito no cambia) ... */}
-                  <div className="card-body">
-                    <div className="row align-items-center">
-                      <div className="col-md-2 text-center">
-                        <img
-                          src={item.img}
-                          className="img-fluid rounded"
-                          alt={item.nombre}
-                          style={{
-                            maxHeight: "100px",
-                            width: "100px",
-                            objectFit: "contain",
-                          }}
-                        />
-                      </div>
-                      <div className="col-md-5">
-                        <h5 className="mb-0">{item.nombre}</h5>
-                        <p className="text-muted mb-1 small">
-                          {item.descripcion
-                            ? item.descripcion.substring(0, 70) + "..."
-                            : "Sin descripción"}
-                        </p>
-                        <button
-                          className="btn btn-sm btn-outline-danger mt-1"
-                          onClick={() => removeFromCart(item.id)}
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                      <div className="col-md-3 text-center d-flex align-items-center justify-content-center">
-                        <div
-                          className="input-group input-group-sm"
-                          style={{ width: "120px" }}
-                        >
-                          <button
-                            className="btn btn-outline-secondary"
-                            type="button"
-                            onClick={() => modifyQuantity(item.id, -1)}
-                          >
-                            -
-                          </button>
-                          <input
-                            type="text"
-                            className="form-control text-center"
-                            value={item.cantidad}
-                            readOnly
+              {cartDetails.map((item) => {
+                console.log(`DEBUG Cart Item: ${item.nombre}`, { original: item.img, fixed: fixImageUrl(item.img) });
+                return (
+                  <div key={item.id} className="card mb-3 shadow-sm">
+                    <div className="card-body">
+                      <div className="row align-items-center">
+                        <div className="col-md-2 text-center">
+                          <img
+                            src={fixImageUrl(item.img)}
+                            className="img-fluid rounded"
+                            alt={item.nombre}
+                            style={{
+                              maxHeight: "100px",
+                              width: "100px",
+                              objectFit: "contain",
+                            }}
                           />
+                        </div>
+                        <div className="col-md-5">
+                          <h5 className="mb-0">{item.nombre}</h5>
+                          <p className="text-muted mb-1 small">
+                            {item.descripcion
+                              ? item.descripcion.substring(0, 70) + "..."
+                              : "Sin descripción"}
+                          </p>
                           <button
-                            className="btn btn-outline-secondary"
-                            type="button"
-                            onClick={() => modifyQuantity(item.id, 1)}
+                            className="btn btn-sm btn-outline-danger mt-1"
+                            onClick={() => removeFromCart(item.productId)}
                           >
-                            +
+                            Eliminar
                           </button>
                         </div>
-                      </div>
-                      <div className="col-md-2 text-end">
-                        <h5 className="mb-0">
-                          $
-                          {(
-                            item.precio *
-                            (1 - discountPercent) *
-                            item.cantidad
-                          ).toFixed(2)}
-                        </h5>
-                        {discountPercent > 0 && (
-                          <div className="small text-muted">
-                            (incluye {discountPercent * 100}% descuento)
+                        <div className="col-md-3 text-center d-flex align-items-center justify-content-center">
+                          <div
+                            className="input-group input-group-sm"
+                            style={{ width: "120px" }}
+                          >
+                            <button
+                              className="btn btn-outline-secondary"
+                              type="button"
+                              onClick={() => modifyQuantity(item.productId, -1)}
+                            >
+                              -
+                            </button>
+                            <input
+                              type="text"
+                              className="form-control text-center"
+                              value={item.cantidad}
+                              readOnly
+                            />
+                            <button
+                              className="btn btn-outline-secondary"
+                              type="button"
+                              onClick={() => modifyQuantity(item.productId, 1)}
+                            >
+                              +
+                            </button>
                           </div>
-                        )}
+                        </div>
+                        <div className="col-md-2 text-end">
+                          <h5 className="mb-0">
+                            $
+                            {(
+                              item.precio *
+                              (1 - discountPercent) *
+                              item.cantidad
+                            ).toFixed(2)}
+                          </h5>
+                          {discountPercent > 0 && (
+                            <div className="small text-muted">
+                              (incluye {discountPercent * 100}% descuento)
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -187,26 +194,25 @@ function CarritoPage() {
         {cartDetails.length > 0 && (
           <div className="col-md-4">
             <div className="card">
-              {/* ... (el JSX interno del resumen del carrito no cambia) ... */}
               <div className="card-body">
                 <h5 className="card-title">Resumen del Pedido</h5>
                 <ul className="list-group list-group-flush">
                   <li className="list-group-item d-flex justify-content-between align-items-center">
                     Subtotal
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>{formatCLP(subtotal)}</span>
                   </li>
 
                   {appliedDiscount && (
                     <li className="list-group-item d-flex justify-content-between align-items-center text-danger">
                       Descuento ({appliedDiscount.codigo})
-                      <span>-${montoDescuento.toFixed(2)}</span>
+                      <span>-{formatCLP(montoDescuento)}</span>
                     </li>
                   )}
 
                   <li className="list-group-item d-flex justify-content-between align-items-center">
                     <strong>Total</strong>
                     <strong>
-                      <span>${totalFinal.toFixed(2)}</span>
+                      <span>{formatCLP(totalFinal)}</span>
                     </strong>
                   </li>
                 </ul>

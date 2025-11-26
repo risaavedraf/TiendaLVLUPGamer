@@ -1,9 +1,20 @@
 // Archivo: Project/src/pages/ProductosPage.tsx
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProductList from "../component/ProductList";
-import { productosArray } from "../data/products";
+import * as productApi from "../api/productApi";
+import type { ProductoResponse, CategoriaResponse } from "../api/productApi";
 import { getAverageRating } from "../utils/reviews";
+
+// Helper para formatear precios en CLP
+const formatCLP = (precio: number) => {
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(precio);
+};
 
 function ProductosPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -11,28 +22,76 @@ function ProductosPage() {
   const [priceRange, setPriceRange] = useState<string>("Todos");
   const [itemsPerPage, setItemsPerPage] = useState(6);
   const [sortBy, setSortBy] = useState<string>("default");
-  const [showFilters, setShowFilters] = useState(false); // Nuevo estado
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Estados para datos del backend
+  const [productos, setProductos] = useState<ProductoResponse[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Cargar productos y categorías al montar
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const [productosData, categoriasData] = await Promise.all([
+          productApi.getProductos(0, 100), // Cargar hasta 100 productos
+          productApi.getCategorias(),
+        ]);
+        setProductos(productosData.content);
+        setCategorias(categoriasData);
+        setError(null);
+      } catch (err) {
+        console.error('Error al cargar datos:', err);
+        setError('Error al cargar productos');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
   // Obtener categorías únicas
   const categories = [
     "Todos",
-    ...Array.from(new Set(productosArray.map((p) => p.categoria.nombre))),
+    ...(Array.isArray(categorias) ? categorias.map((c) => c.nombre) : []),
   ];
 
   // Rangos de precio
   const priceRanges = [
     { label: "Todos", min: 0, max: Infinity },
-    { label: "$0 - $50", min: 0, max: 50 },
-    { label: "$50 - $100", min: 50, max: 100 },
-    { label: "$100 - $300", min: 100, max: 300 },
-    { label: "$300+", min: 300, max: Infinity },
+    { label: "$0 - $50.000", min: 0, max: 50000 },
+    { label: "$50.000 - $100.000", min: 50000, max: 100000 },
+    { label: "$100.000 - $500.000", min: 100000, max: 500000 },
+    { label: "$500.000+", min: 500000, max: Infinity },
   ];
+
+  // Mostrar loading
+  if (isLoading) {
+    return (
+      <div className="container py-5 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+        <p className="mt-3">Cargando productos...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-5">
+        <div className="alert alert-danger">{error}</div>
+      </div>
+    );
+  }
 
   // Filtrar productos por categoría y precio
   let filteredProducts =
     selectedCategory === "Todos"
-      ? productosArray
-      : productosArray.filter((p) => p.categoria.nombre === selectedCategory);
+      ? productos
+      : productos.filter((p) => p.categoria.nombre === selectedCategory);
 
   // Aplicar filtro de precio
   if (priceRange !== "Todos") {
@@ -124,18 +183,16 @@ function ProductosPage() {
                   "✓"}
               </span>
               <i
-                className={`bi ${
-                  showFilters ? "bi-chevron-up" : "bi-chevron-down"
-                }`}
+                className={`bi ${showFilters ? "bi-chevron-up" : "bi-chevron-down"
+                  }`}
               ></i>
             </button>
           </div>
 
           {/* Sidebar de filtros - Solo visible cuando está expandido en móvil, siempre visible en desktop */}
           <div
-            className={`col-lg-3 mb-4 ${
-              showFilters ? "" : "d-none d-lg-block"
-            }`}
+            className={`col-lg-3 mb-4 ${showFilters ? "" : "d-none d-lg-block"
+              }`}
           >
             <div className="bg-white rounded-3 shadow-sm p-4">
               {/* Header de filtros con contador */}
@@ -178,11 +235,10 @@ function ProductosPage() {
                   {categories.map((category) => (
                     <div
                       key={category}
-                      className={`form-check p-2 rounded ${
-                        selectedCategory === category
-                          ? "bg-primary bg-opacity-10"
-                          : ""
-                      }`}
+                      className={`form-check p-2 rounded ${selectedCategory === category
+                        ? "bg-primary bg-opacity-10"
+                        : ""
+                        }`}
                     >
                       <input
                         className="form-check-input"
@@ -199,10 +255,10 @@ function ProductosPage() {
                         <span>{category}</span>
                         <span className="badge bg-secondary rounded-pill">
                           {category === "Todos"
-                            ? productosArray.length
-                            : productosArray.filter(
-                                (p) => p.categoria.nombre === category
-                              ).length}
+                            ? productos.length
+                            : productos.filter(
+                              (p) => p.categoria.nombre === category
+                            ).length}
                         </span>
                       </label>
                     </div>
@@ -224,11 +280,10 @@ function ProductosPage() {
                   {priceRanges.map((range) => (
                     <div
                       key={range.label}
-                      className={`form-check p-2 rounded ${
-                        priceRange === range.label
-                          ? "bg-primary bg-opacity-10"
-                          : ""
-                      }`}
+                      className={`form-check p-2 rounded ${priceRange === range.label
+                        ? "bg-primary bg-opacity-10"
+                        : ""
+                        }`}
                     >
                       <input
                         className="form-check-input"
@@ -369,9 +424,8 @@ function ProductosPage() {
                           ).map((number) => (
                             <li
                               key={number}
-                              className={`page-item ${
-                                currentPage === number ? "active" : ""
-                              }`}
+                              className={`page-item ${currentPage === number ? "active" : ""
+                                }`}
                             >
                               <button
                                 className="page-link"

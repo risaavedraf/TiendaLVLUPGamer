@@ -1,23 +1,22 @@
 // Archivo: Project/src/components/ProductList.tsx
 
-import { productosArray } from "../data/products";
-import type { Product } from "../data/products";
+import type { ProductoResponse } from "../api/productApi";
 import ProductCard from "./ProductCard";
 import { useEffect, useState, useRef } from "react";
 
 // 1. Definimos las props que este componente puede recibir
 type ProductListProps = {
   limit?: number; // 'limit' es opcional (por eso el '?')
-  products?: Product[]; // Agregamos 'products' opcional para paginación
+  products?: ProductoResponse[]; // Agregamos 'products' opcional para paginación
 };
 
 // 2. Usamos las props en la definición de la función
-function ProductList({ limit, products }: ProductListProps) {
+function ProductList({ limit, products = [] }: ProductListProps) {
   // Prioridad: si se pasan 'products', los usa tal cual (no infinite scroll).
   // Si no se pasan products ni limit, activamos carga progresiva en el home.
-  const productosBase = products || productosArray;
+  const productosBase = products;
 
-  const enableInfinite = !products && typeof limit === "undefined";
+  const enableInfinite = products.length === 0 && typeof limit === "undefined";
 
   const initialCount = 12; // cuantos cargar inicialmente en home
   const step = 6; // cuantos cargar cada vez que el usuario baja
