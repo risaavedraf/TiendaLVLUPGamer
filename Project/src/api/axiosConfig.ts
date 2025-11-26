@@ -4,9 +4,7 @@ import axios from 'axios';
 // URL base del backend
 // En desarrollo usamos el proxy ('/api')
 // En producción usamos la URL completa definida en .env
-const API_BASE_URL = import.meta.env.DEV
-  ? '/api'
-  : (import.meta.env.VITE_API_URL || 'http://localhost:8080') + '/api';
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8080') + '/api';
 
 // Crear instancia de Axios con configuración por defecto
 const axiosInstance = axios.create({

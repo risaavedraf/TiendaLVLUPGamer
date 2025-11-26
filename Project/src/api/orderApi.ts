@@ -21,16 +21,13 @@ export interface DireccionResponse extends DireccionRequest {
 }
 
 export interface CheckoutItemRequest {
-  productoId: number;
-  cantidad: number;
+  productId: number;
+  quantity: number;
 }
 
 export interface CheckoutRequest {
   items: CheckoutItemRequest[];
-  direccionEnvioId?: number;
-  nuevaDireccion?: DireccionRequest;
-  metodoPago: 'TARJETA' | 'TRANSFERENCIA' | 'EFECTIVO';
-  codigoCupon?: string;
+  direccionId: number;
 }
 
 export interface DetallePedidoResponse {
@@ -66,10 +63,10 @@ export interface UpdatePedidoEstadoRequest {
 
 /**
  * CREAR PEDIDO (Checkout)
- * POST /api/pedidos
+ * POST /api/pedidos/checkout
  */
 export const createPedido = async (checkout: CheckoutRequest): Promise<PedidoResponse> => {
-  const response = await axiosInstance.post<PedidoResponse>('/pedidos', checkout);
+  const response = await axiosInstance.post<PedidoResponse>('/pedidos/checkout', checkout);
   return response.data;
 };
 
@@ -117,7 +114,7 @@ export const getAllPedidos = async (
 ): Promise<PageResponse<PedidoResponse>> => {
   const params: any = { page, size };
   if (estado) params.estado = estado;
-  
+
   const response = await axiosInstance.get<PageResponse<PedidoResponse>>('/admin/pedidos', { params });
   return response.data;
 };

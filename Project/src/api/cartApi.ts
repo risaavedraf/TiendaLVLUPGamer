@@ -53,19 +53,19 @@ export const addItemCarrito = async (item: AddCarritoItemRequest): Promise<Carri
 
 /**
  * ACTUALIZAR CANTIDAD DE UN ITEM
- * PUT /api/carrito/items/{itemId}
+ * PUT /api/carrito/items/{productoId}
  */
-export const updateItemCarrito = async (itemId: number, cantidad: number): Promise<CarritoResponse> => {
-  const response = await axiosInstance.put<CarritoResponse>(`/carrito/items/${itemId}`, { cantidad });
+export const updateItemCarrito = async (productoId: number, cantidad: number): Promise<CarritoResponse> => {
+  const response = await axiosInstance.put<CarritoResponse>(`/carrito/items/${productoId}`, { cantidad });
   return response.data;
 };
 
 /**
  * ELIMINAR ITEM DEL CARRITO
- * DELETE /api/carrito/items/{itemId}
+ * DELETE /api/carrito/items/{productoId}
  */
-export const removeItemCarrito = async (itemId: number): Promise<CarritoResponse> => {
-  const response = await axiosInstance.delete<CarritoResponse>(`/carrito/items/${itemId}`);
+export const removeItemCarrito = async (productoId: number): Promise<CarritoResponse> => {
+  const response = await axiosInstance.delete<CarritoResponse>(`/carrito/items/${productoId}`);
   return response.data;
 };
 

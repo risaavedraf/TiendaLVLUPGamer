@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import * as productApi from "../api/productApi";
 import type { ProductoResponse } from "../api/productApi";
 import { useCart } from "../contexts/CartContext";
+import { getProductImage } from "../utils/imageUtils"; // Importar utilidad
 
 // Helper para formatear precios en CLP
 const formatCLP = (precio: number) => {
@@ -96,9 +97,10 @@ function DetalleProductoPage() {
         const id = parseInt(productId || "0", 10);
         const foundProduct = await productApi.getProductoById(id);
         setProducto(foundProduct);
-        setMainImageSrc(foundProduct.imagenes && foundProduct.imagenes.length > 0 ? foundProduct.imagenes[0].url : "/Img/elementor-placeholder-image.png");
+        // Usar getProductImage para obtener la URL correcta (incluyendo base64)
+        setMainImageSrc(getProductImage(foundProduct));
         setCantidad(foundProduct.stock && foundProduct.stock > 0 ? 1 : 0);
-        
+
         // Cargar productos relacionados
         const todosProductos = await productApi.getProductos(0, 100);
         const relacionados = todosProductos.content
@@ -144,16 +146,29 @@ function DetalleProductoPage() {
   }
 
   const handleAddToCart = () => {
-    // Añadir la cantidad solicitada en una sola llamada (el contexto comprobará stock)
-    addToCart(producto, cantidad);
+    if (!producto) return;
+
+    // Adaptar producto para el carrito, asegurando que la imagen vaya arreglada
+    const productToCart = {
+      id: producto.id,
+      nombre: producto.nombre,
+      descripcion: producto.descripcion,
+      precio: producto.precio,
+      stock: producto.stock,
+      img: getProductImage(producto), // Usar la utilidad para asegurar URL válida
+      categoria: producto.categoria,
+    };
+
+    // Añadir la cantidad solicitada en una sola llamada
+    addToCart(productToCart, cantidad);
   };
 
   // Calcular descuento basado en el usuario actual
   const discountPercent =
     currentUser &&
-    currentUser.email &&
-    (currentUser.email.endsWith("@duocuc.cl") ||
-      currentUser.email.endsWith("@profesor.duoc.cl"))
+      currentUser.email &&
+      (currentUser.email.endsWith("@duocuc.cl") ||
+        currentUser.email.endsWith("@profesor.duoc.cl"))
       ? 0.1
       : 0;
   const displayedPrice = producto.precio * (1 - discountPercent);
@@ -175,7 +190,7 @@ function DetalleProductoPage() {
           <div className="col-md-6 mb-4">
             <div className="bg-white rounded-3 shadow-sm p-4">
               <img
-                src={mainImageSrc || (producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[0].url : "/Img/elementor-placeholder-image.png")}
+                src={mainImageSrc} // Ya procesada por getProductImage
                 alt={producto.nombre}
                 className="img-fluid"
                 style={{
@@ -307,9 +322,8 @@ function DetalleProductoPage() {
 
               <div className="d-grid gap-2">
                 <button
-                  className={`btn btn-lg ${
-                    producto.stock === 0 ? "btn-secondary" : "btn-primary"
-                  }`}
+                  className={`btn btn-lg ${producto.stock === 0 ? "btn-secondary" : "btn-primary"
+                    }`}
                   onClick={handleAddToCart}
                   disabled={producto.stock === 0}
                   aria-disabled={producto.stock === 0}
@@ -349,35 +363,35 @@ function DetalleProductoPage() {
           <h3 className="mb-4">Productos Relacionados</h3>
           <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
             {productosRelacionados.map((p) => (
-                  <div key={p.id} className="col">
-                  <div className="card h-100 shadow-sm">
-                    <img
-                      src={p.imagenes && p.imagenes.length > 0 ? p.imagenes[0].url : "/Img/elementor-placeholder-image.png"}
-                      className="card-img-top"
-                      alt={p.nombre}
-                      style={{
-                        height: "200px",
-                        objectFit: "contain",
-                        padding: "1rem",
-                        cursor: "pointer",
-                      }}
+              <div key={p.id} className="col">
+                <div className="card h-100 shadow-sm">
+                  <img
+                    src={getProductImage(p)} // Usar utilidad
+                    className="card-img-top"
+                    alt={p.nombre}
+                    style={{
+                      height: "200px",
+                      objectFit: "contain",
+                      padding: "1rem",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => navigate(`/producto/${p.id}`)}
+                  />
+                  <div className="card-body">
+                    <h6 className="card-title">{p.nombre}</h6>
+                    <p className="text-primary fw-bold">
+                      {formatCLP(p.precio)}
+                    </p>
+                    <button
+                      className="btn btn-sm btn-primary w-100"
                       onClick={() => navigate(`/producto/${p.id}`)}
-                    />
-                    <div className="card-body">
-                      <h6 className="card-title">{p.nombre}</h6>
-                      <p className="text-primary fw-bold">
-                        {formatCLP(p.precio)}
-                      </p>
-                      <button
-                        className="btn btn-sm btn-primary w-100"
-                        onClick={() => navigate(`/producto/${p.id}`)}
-                      >
-                        Ver Detalles
-                      </button>
-                    </div>
+                    >
+                      Ver Detalles
+                    </button>
                   </div>
                 </div>
-              ))}
+              </div>
+            ))}
           </div>
         </div>
 

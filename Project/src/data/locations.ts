@@ -12,7 +12,7 @@ export type Region = {
 
 // Copiamos y exportamos la data de registro.js
 export const regionesYComunas: Region[] = [
- {
+  {
     region: "Región de Arica y Parinacota",
     comunas: [
       { nombre: "Arica", ciudad: "Arica" },
@@ -111,7 +111,7 @@ export const regionesYComunas: Region[] = [
       { nombre: "Cartagena", ciudad: "Cartagena" },
       { nombre: "El Quisco", ciudad: "El Quisco" },
       { nombre: "El Tabo", ciudad: "El Tabo" },
-      { nombre: "San Antonio", ciudad: "San Antonio" },
+
       { nombre: "Santo Domingo", ciudad: "Santo Domingo" },
       { nombre: "San Felipe", ciudad: "San Felipe" },
       { nombre: "Catemu", ciudad: "Catemu" },
@@ -290,7 +290,7 @@ export const regionesYComunas: Region[] = [
       { nombre: "Santa Juana", ciudad: "Santa Juana" },
       { nombre: "Talcahuano", ciudad: "Talcahuano" },
       { nombre: "Tomé", ciudad: "Tomé" },
-      { nombre: "Hualqui", ciudad: "Hualqui" },
+
       { nombre: "Cabrero", ciudad: "Cabrero" },
       { nombre: "Laja", ciudad: "Laja" },
       { nombre: "Los Ángeles", ciudad: "Los Ángeles" },

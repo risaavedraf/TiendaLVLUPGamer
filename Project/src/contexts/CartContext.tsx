@@ -1,9 +1,8 @@
-// Archivo: Project/src/contexts/CartContext.tsx
-
 import { createContext, useState, useContext, useEffect } from "react";
 import type { ReactNode } from "react";
 import * as cartApi from "../api/cartApi";
 import type { ProductoResponse } from "../api/productApi";
+import { getProductImage, fixImageUrl } from "../utils/imageUtils";
 
 // Tipos adaptados para compatibilidad
 export type Product = {
@@ -49,7 +48,8 @@ const mapProductoToProduct = (producto: ProductoResponse): Product => ({
   descripcion: producto.descripcion,
   precio: producto.precio,
   stock: producto.stock,
-  img: producto.imagenes?.[0]?.url || producto.imagenUrl || "/Img/elementor-placeholder-image.png",
+  // Usar getProductImage para obtener la URL correcta
+  img: getProductImage(producto),
   categoria: producto.categoria,
 });
 
@@ -78,7 +78,8 @@ const mapCarritoItemToCartItem = (item: any): CartItem => {
         descripcion: '',
         precio: item.precioUnitario,
         stock: 999, // No sabemos el stock real
-        img: item.imagenUrl,
+        // Usar fixImageUrl para sanitizar la URL
+        img: fixImageUrl(item.imagenUrl),
         categoria: undefined,
       },
       precioUnitario: item.precioUnitario,
@@ -116,10 +117,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       const carritoResponse = await cartApi.getCarrito();
-      
+
       // Mapear items (ahora maneja ambos formatos)
       const items = carritoResponse.items.map(mapCarritoItemToCartItem);
-      
+
       setCartItems(items);
       setTotal(carritoResponse.total);
     } catch (error: any) {
@@ -140,7 +141,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addToCart = async (product: Product, qty: number = 1) => {
     try {
       setIsLoading(true);
-      
+
       // Si el usuario está logueado, usar la API
       const token = localStorage.getItem('jwt_token');
       if (token) {
@@ -191,7 +192,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const token = localStorage.getItem('jwt_token');
       const item = cartItems.find((i) => i.productId === productId);
-      
+
       if (!item) return;
 
       const newQuantity = item.cantidad + change;
@@ -202,7 +203,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
 
       if (token) {
-        const response = await cartApi.updateItemCarrito(item.id, newQuantity);
+        // CORRECCIÓN: El backend espera productoId, no el ID del item del carrito
+        const response = await cartApi.updateItemCarrito(item.productId, newQuantity);
         const items = response.items.map(mapCarritoItemToCartItem);
         setCartItems(items);
         setTotal(response.total);
@@ -223,11 +225,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const token = localStorage.getItem('jwt_token');
       const item = cartItems.find((i) => i.productId === productId);
-      
+
       if (!item) return;
-      
+
       if (token) {
-        const response = await cartApi.removeItemCarrito(item.id);
+        // CORRECCIÓN: El backend espera productoId
+        const response = await cartApi.removeItemCarrito(item.productId);
         const items = response.items.map(mapCarritoItemToCartItem);
         setCartItems(items);
         setTotal(response.total);
@@ -244,11 +247,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = async () => {
     try {
       const token = localStorage.getItem('jwt_token');
-      
+
       if (token) {
         await cartApi.clearCarrito();
       }
-      
+
       setCartItems([]);
       setTotal(0);
     } catch (error) {
