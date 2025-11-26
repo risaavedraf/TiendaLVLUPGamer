@@ -1,4 +1,5 @@
 import { createContext, useState, useContext, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 import type { ReactNode } from "react";
 import * as cartApi from "../api/cartApi";
 import type { ProductoResponse } from "../api/productApi";
@@ -89,28 +90,40 @@ const mapCarritoItemToCartItem = (item: any): CartItem => {
 };
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  // Estado local del carrito (sincronizado con localStorage para offline)
+  const { currentUser } = useAuth();
+  const storageKey = currentUser ? `carrito_${currentUser.id}` : 'carrito_guest';
+
+  // Estado local del carrito (sincronizado con localStorage para offline y por usuario)
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    const storedCart = localStorage.getItem("carrito");
-    return storedCart ? JSON.parse(storedCart) : [];
+    try {
+      const storedCart = localStorage.getItem(storageKey);
+      return storedCart ? JSON.parse(storedCart) : [];
+    } catch { return []; }
   });
 
   const [lastAddedItemName, setLastAddedItemName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [total, setTotal] = useState(0);
 
-  // Sincronizar con localStorage
+  // Sincronizar con localStorage usando clave por usuario
   useEffect(() => {
-    localStorage.setItem("carrito", JSON.stringify(cartItems));
-  }, [cartItems]);
+    try { localStorage.setItem(storageKey, JSON.stringify(cartItems)); } catch { /* ignore */ }
+  }, [cartItems, storageKey]);
 
   // Cargar carrito desde la API al montar (si el usuario está logueado)
   useEffect(() => {
     const token = localStorage.getItem('jwt_token');
-    if (token) {
+    const justLoggedOut = localStorage.getItem('just_logged_out');
+    if (justLoggedOut) {
+      // limpieza carrito guest tras logout anterior
+      try { localStorage.removeItem('carrito_guest'); } catch { /* ignore */ }
+      localStorage.removeItem('just_logged_out');
+      setCartItems([]);
+      setTotal(0);
+    } else if (token && currentUser) {
       refreshCart();
     }
-  }, []);
+  }, [currentUser]);
 
   // Función para refrescar el carrito desde la API
   const refreshCart = async () => {

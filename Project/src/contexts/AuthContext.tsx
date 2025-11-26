@@ -17,6 +17,7 @@ export type User = {
 };
 
 type RegisterData = {
+  username?: string;
   nombre: string;
   apellido: string;
   correo: string;
@@ -28,7 +29,7 @@ type AuthContextType = {
   currentUser: User | null;
   login: (email: string, contrasenia: string) => Promise<User>;
   logout: () => void;
-  register: (newUser: RegisterData) => Promise<void>;
+  register: (newUser: RegisterData) => Promise<string>; // devuelve mensaje
   updateProfile: (userData: Partial<User>) => Promise<void>;
   isLoading: boolean;
 };
@@ -36,10 +37,11 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Función helper para convertir UsuarioResponse a User
-const mapUsuarioToUser = (usuario: UsuarioResponse): User => ({
+// Permite compatibilidad si el backend alguna vez envía name/lastName
+const mapUsuarioToUser = (usuario: UsuarioResponse & { name?: string; lastName?: string }): User => ({
   id: usuario.id,
-  nombre: usuario.name || usuario.nombre || '',
-  apellido: usuario.lastName || usuario.apellido || '',
+  nombre: (usuario.nombre || usuario.name || '').trim(),
+  apellido: (usuario.apellido || usuario.lastName || '').trim(),
   email: usuario.email,
   run: usuario.run,
   direccion: usuario.direccion,
@@ -81,29 +83,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Lógica de Logout usando API
   const logout = () => {
+    const userId = currentUser?.id;
     authApi.logout();
+    // Eliminar carritos posibles
+    try { localStorage.removeItem('carrito'); } catch { /* ignore */ }
+    try { localStorage.removeItem('carrito_guest'); } catch { /* ignore */ }
+    if (userId) {
+      try { localStorage.removeItem(`carrito_${userId}`); } catch { /* ignore */ }
+    }
+  // Flag para que CartContext sepa que debe limpiar carrito_guest en siguiente carga
+  try { localStorage.setItem('just_logged_out','1'); } catch { /* ignore */ }
     setCurrentUser(null);
+    window.location.reload();
   };
 
   // Lógica de Registro usando API real
-  const register = async (newUser: RegisterData): Promise<void> => {
+  const register = async (newUser: RegisterData): Promise<string> => {
     try {
       setIsLoading(true);
       
-      // Generar username a partir del email (o usar el nombre)
-      const username = newUser.correo.split('@')[0];
+  // Usar username proporcionado o derivar del correo
+  const username = (newUser.username && newUser.username.trim()) || newUser.correo.split('@')[0];
       
-      await authApi.registro({
-        username: username,
+      const created = await authApi.registro({
+  username,
         email: newUser.correo,
         password: newUser.contrasena,
         name: newUser.nombre,
         lastName: newUser.apellido,
         birthDate: newUser.fechaNacimiento || '2000-01-01', // Fecha por defecto si no se proporciona
       });
+      return `Usuario ${created.nombre} creado`;    
     } catch (error: any) {
       console.error('Error en registro:', error);
-      throw new Error(error.response?.data?.mensaje || 'Error al registrar usuario');
+      const backendMsg = error.response?.data?.mensaje || error.response?.data?.message;
+      throw new Error(backendMsg || 'Error al registrar usuario');
     } finally {
       setIsLoading(false);
     }

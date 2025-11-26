@@ -116,7 +116,7 @@ function Header() {
               // Vista Usuario
               <div id="vista-usuario">
                 <span className="text-white me-3" id="mensaje-bienvenida">
-                  Bienvenido, {currentUser.nombre}
+                  Bienvenido, {currentUser.nombre || 'Usuario'}{currentUser.apellido ? ` ${currentUser.apellido}` : ''}
                 </span>
                 
                 {/* Mostrar botón de Admin solo si el usuario tiene rol ROLE_ADMIN */}
